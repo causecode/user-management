@@ -1,16 +1,29 @@
 buildscript {
+    ext {
+        grailsVersion = project.grailsVersion
+    }
     repositories {
         mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://repo.grails.org/grails/core" }
+        mavenCentral()
+        maven {
+            credentials {
+                username mavenUser
+                password mavenPassword
+            }
+            url "http://maven.causecode.com"
+        }
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
+        classpath "com.causecode.plugins:gradle-code-quality:0.0.2"
     }
 }
 
-version "0.1"
-group "user.management"
+version "0.0.1"
+group "com.causecode.plugins"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
@@ -18,10 +31,20 @@ apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
 apply plugin:"org.grails.grails-gsp"
 apply plugin:"asset-pipeline"
+apply plugin:'gradle-code-quality'
 
 repositories {
     mavenLocal()
+    mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
     maven { url "https://repo.grails.org/grails/core" }
+    maven {
+        credentials {
+            username ccRepoUser
+            password ccRepoPassword
+        }
+        url "http://maven.causecode.com"
+    }
 }
 
 dependencyManagement {
@@ -32,6 +55,7 @@ dependencyManagement {
 }
 
 dependencies {
+    // Default plugin dependencies
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
@@ -51,23 +75,89 @@ dependencies {
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+
+    // CauseCode Dependencies
+    provided "com.causecode.plugins:nucleus:0.4.2"
+
+    // Grails JSON Views
+    compile "org.grails.plugins:views-json:1.1.2"
+    compile "org.grails.plugins:views-json-templates:1.1.2"
+
+    // Spring Security Dependencies
+    compile "org.grails.plugins:spring-security-core:3.1.1"
+    compile "org.grails.plugins:spring-security-rest:2.0.0.M2"
+    compile "org.grails.plugins:spring-security-rest-gorm:2.0.0.M2"
+
+
+    // Grails Plugins
+    compile 'org.grails.plugins:quartz:2.0.9'
+    compile "org.grails.plugins:asynchronous-mail:2.0.0.RC4"
+    compile "org.grails.plugins:export:2.0.0"
+
+    // Test Dependencies
+    testCompile "org.grails:grails-datastore-rest-client"
+
+    // Grails core dependencies
+    compile "org.grails:grails-logging"
 }
+
+assets {
+    packagePlugin = true
+}
+
+ccJacocoExt {
+    excludes = ['**/Application*/**',
+                '**/UrlMappings*/**',
+    ]
+}
+
+project.publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from project.components.java
+
+            artifactId "user-management"
+
+            pom.withXml {
+                def pomNode = asNode()
+                // version-less dependencies are handled with dependencyManagement
+                pomNode.dependencies.dependency.findAll {
+                    it.version.text().isEmpty()
+                }.each {
+                    it.replaceNode {}
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username mavenPublishUser
+                password mavenPublishPassword
+            }
+            url "http://maven-upload.causecode.com"
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleWrapperVersion
+}
+
 grailsPublish {
-    // TODO: Provide values here
-    user = 'user'
-    key = 'key'
+    user = 'user'  // Not required if you defined BINARY_USER var
+    key = 'key'    // Not required if you defined BINARY_KEY var
+    userOrg = 'mycompany' // Optional
     githubSlug = 'foo/bar'
     license {
         name = 'Apache-2.0'
     }
-    title = "My Plugin"
-    desc = "Full plugin description"
-    developers = [johndoe:"John Doe"]
-    portalUser = ""
-    portalPassword = ""    
+    title = "My Plugin Title"
+    desc = "My Plugin Description"
+    developers = [johndoe: "John Doe"]
 }
 
-
-assets {
-    packagePlugin = true
+// Excluding UrlMappings from jar
+jar {
+    exclude('**/com/causecode/UrlMappings*')
 }
