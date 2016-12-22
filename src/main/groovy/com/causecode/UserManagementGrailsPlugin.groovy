@@ -29,6 +29,8 @@ class UserManagementGrailsPlugin extends Plugin {
         '''
     def documentation = 'https://bitbucket.org/causecode/user-management'
 
+    def profiles = ['web-plugin']
+
     // Changing load order so that injected beans are not overridden by spring-security-core beans.
     def loadAfter = ['spring-security-core']
 

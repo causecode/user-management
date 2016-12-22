@@ -55,7 +55,7 @@ dependencyManagement {
 }
 
 dependencies {
-    // Default plugin dependencies
+    // Default plugin dependencies shipped with grails 3.2.0
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
@@ -69,7 +69,8 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    provided "org.codehaus.groovy:groovy-ant"
+    // Default dependency of plugin shipped with Grails 3.2.0 Not required for this plugin, so commented.
+    // provided "org.codehaus.groovy:groovy-ant"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
     testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
@@ -77,7 +78,8 @@ dependencies {
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
     // CauseCode Dependencies
-    provided "com.causecode.plugins:nucleus:0.4.2"
+    provided "com.causecode.plugins:nucleus:0.4.3"
+    provided "com.causecode.plugins:spring-rest-config:0.0.1"
 
     // Grails JSON Views
     compile "org.grails.plugins:views-json:1.1.2"
@@ -87,7 +89,6 @@ dependencies {
     compile "org.grails.plugins:spring-security-core:3.1.1"
     compile "org.grails.plugins:spring-security-rest:2.0.0.M2"
     compile "org.grails.plugins:spring-security-rest-gorm:2.0.0.M2"
-
 
     // Grails Plugins
     compile 'org.grails.plugins:quartz:2.0.9'
@@ -99,6 +100,15 @@ dependencies {
 
     // Grails core dependencies
     compile "org.grails:grails-logging"
+
+    // Grails Core Plugins Dependencies
+    compile "org.grails:grails-plugin-async"
+
+    // Hibernate Dependencies
+    compile "org.grails.plugins:hibernate5"
+
+    // In memory H2 Database.
+    runtime "com.h2database:h2"
 }
 
 assets {
