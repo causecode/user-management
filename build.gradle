@@ -80,6 +80,8 @@ dependencies {
     // CauseCode Dependencies
     provided "com.causecode.plugins:nucleus:0.4.3"
     provided "com.causecode.plugins:spring-rest-config:0.0.1"
+    provided "com.causecode.plugins:spring-security-core-config:0.0.1"
+    provided "com.causecode.plugins:async-mail-config:0.0.1"
 
     // Grails JSON Views
     compile "org.grails.plugins:views-json:1.1.2"
