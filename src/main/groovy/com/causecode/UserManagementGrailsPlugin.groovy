@@ -12,24 +12,23 @@ import com.causecode.spring.rest.CustomOauthUserDetailsService
 import com.causecode.util.CustomUserDetailsService
 
 /**
- * Contains all information about user-management Plugin
+ * This is the Plugin descriptor file for User Management Plugin.
  */
 class UserManagementGrailsPlugin extends Plugin {
 
     def grailsVersion = '3.2.0 > *'
-    def pluginExcludes = [
-            '**/com/causecode/UrlMappings*/**'
-    ]
+    def pluginExcludes = []
 
     def title = 'User Management Plugin' // Headline display name of the plugin
     def author = 'Causecode'
     def authorEmail = ''
     def description = '''\
-            Brief summary/description of the plugin.
+            This plugin is to deal with user management related operations such as new user registration,
+            retrieving and resetting password etc.
         '''
     def documentation = 'https://bitbucket.org/causecode/user-management'
 
-    def profiles = ['web-plugin']
+    def profiles = ['rest-api-plugin']
 
     // Changing load order so that injected beans are not overridden by spring-security-core beans.
     def loadAfter = ['spring-security-core']

@@ -12,4 +12,4 @@ model {
 }
 
 json g.render(user, [excludes: ['password', 'passwordExpired', 'lastUpdated', 'dateCreated', 'accountExpired',
-                                'accountLocked', 'enabled']])
+        'accountLocked', 'enabled']])

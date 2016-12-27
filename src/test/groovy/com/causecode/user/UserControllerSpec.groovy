@@ -8,7 +8,7 @@
 package com.causecode.user
 
 import com.causecode.util.NucleusUtils
-import com.causecode.utils.EmailService
+import com.causecode.util.EmailService
 import com.causecode.validators.PasswordValidatorSpec
 import grails.plugin.asyncmail.AsynchronousMailService
 import grails.plugin.json.view.JsonViewTemplateEngine

@@ -10,7 +10,7 @@ package com.causecode.user
 import com.causecode.RestfulController
 import com.causecode.exceptions.InvalidParameterException
 import com.causecode.util.NucleusUtils
-import com.causecode.utils.EmailService
+import com.causecode.util.EmailService
 import com.causecode.validators.PasswordValidator
 import grails.core.GrailsApplication
 import grails.plugin.springsecurity.SpringSecurityService

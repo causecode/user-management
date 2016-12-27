@@ -1,7 +1,4 @@
 buildscript {
-    ext {
-        grailsVersion = project.grailsVersion
-    }
     repositories {
         mavenLocal()
         maven { url "https://plugins.gradle.org/m2/" }
@@ -17,7 +14,6 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
         classpath "com.causecode.plugins:gradle-code-quality:0.0.2"
     }
 }
@@ -29,8 +25,6 @@ apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
-apply plugin:"org.grails.grails-gsp"
-apply plugin:"asset-pipeline"
 apply plugin:'gradle-code-quality'
 
 repositories {
@@ -71,26 +65,19 @@ dependencies {
     provided "org.grails:grails-plugin-domain-class"
     // Default dependency of plugin shipped with Grails 3.2.0 Not required for this plugin, so commented.
     // provided "org.codehaus.groovy:groovy-ant"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
+    //  runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
     testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
     // CauseCode Dependencies
-    provided "com.causecode.plugins:nucleus:0.4.3"
-    provided "com.causecode.plugins:spring-rest-config:0.0.1"
-    provided "com.causecode.plugins:spring-security-core-config:0.0.1"
-    provided "com.causecode.plugins:async-mail-config:0.0.1"
+    compile "com.causecode.plugins:nucleus:0.4.3"
+    compile "com.causecode.plugins:rest-security-core:0.0.1"
 
     // Grails JSON Views
     compile "org.grails.plugins:views-json:1.1.2"
     compile "org.grails.plugins:views-json-templates:1.1.2"
-
-    // Spring Security Dependencies
-    compile "org.grails.plugins:spring-security-core:3.1.1"
-    compile "org.grails.plugins:spring-security-rest:2.0.0.M2"
-    compile "org.grails.plugins:spring-security-rest-gorm:2.0.0.M2"
 
     // Grails Plugins
     compile 'org.grails.plugins:quartz:2.0.9'
@@ -113,13 +100,10 @@ dependencies {
     runtime "com.h2database:h2"
 }
 
-assets {
-    packagePlugin = true
-}
-
 ccJacocoExt {
-    excludes = ['**/Application*/**',
-                '**/UrlMappings*/**',
+    excludes = [
+        '**/Application*/**',
+        '**/UrlMappings*/**',
     ]
 }
 
@@ -167,9 +151,4 @@ grailsPublish {
     title = "My Plugin Title"
     desc = "My Plugin Description"
     developers = [johndoe: "John Doe"]
-}
-
-// Excluding UrlMappings from jar
-jar {
-    exclude('**/com/causecode/UrlMappings*')
 }
