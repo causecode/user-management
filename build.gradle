@@ -65,7 +65,7 @@ dependencies {
     provided "org.grails:grails-plugin-domain-class"
     // Default dependency of plugin shipped with Grails 3.2.0 Not required for this plugin, so commented.
     // provided "org.codehaus.groovy:groovy-ant"
-    //  runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
+    // runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
     testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
