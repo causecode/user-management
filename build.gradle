@@ -76,25 +76,19 @@ dependencies {
     compile "com.causecode.plugins:rest-security-core:0.0.1"
 
     // Grails JSON Views
-    compile "org.grails.plugins:views-json:1.1.2"
-    compile "org.grails.plugins:views-json-templates:1.1.2"
+    provided "org.grails.plugins:views-json:1.1.3"
+    provided "org.grails.plugins:views-json-templates:1.1.3"
 
     // Grails Plugins
-    compile 'org.grails.plugins:quartz:2.0.9'
-    compile "org.grails.plugins:asynchronous-mail:2.0.0.RC4"
-    compile "org.grails.plugins:export:2.0.0"
+    provided 'org.grails.plugins:quartz:2.0.9'
+    provided "org.grails.plugins:asynchronous-mail:2.0.0.RC4"
+    provided "org.grails.plugins:spring-security-core:3.1.1"
 
     // Test Dependencies
     testCompile "org.grails:grails-datastore-rest-client"
 
-    // Grails core dependencies
-    compile "org.grails:grails-logging"
-
-    // Grails Core Plugins Dependencies
-    compile "org.grails:grails-plugin-async"
-
     // Hibernate Dependencies
-    compile "org.grails.plugins:hibernate5"
+    provided "org.grails.plugins:hibernate5"
 
     // In memory H2 Database.
     runtime "com.h2database:h2"
@@ -134,10 +128,6 @@ project.publishing {
             url "http://maven-upload.causecode.com"
         }
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = gradleWrapperVersion
 }
 
 grailsPublish {

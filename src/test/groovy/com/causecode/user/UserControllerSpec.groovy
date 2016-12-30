@@ -195,7 +195,7 @@ class UserControllerSpec extends Specification {
         given: 'The request parameters'
         Map data = [email: 'cause@code.com']
 
-        and: 'An User with this email'
+        and: 'A User with this email'
         User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
         userInstance.save()
 

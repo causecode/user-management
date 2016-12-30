@@ -20,7 +20,7 @@ class UserManagementGrailsPlugin extends Plugin {
     def pluginExcludes = []
 
     def title = 'User Management Plugin' // Headline display name of the plugin
-    def author = 'Causecode'
+    def author = 'CauseCode'
     def authorEmail = ''
     def description = '''\
             This plugin is to deal with user management related operations such as new user registration,
