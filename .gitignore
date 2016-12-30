@@ -1,8 +1,8 @@
 Thumbs.db
 .DS_Store
-.gradle
-build/
-.idea
+.gradle/**
+build/**
+.idea/**
 *.iml
 *.ipr
 *.iws
