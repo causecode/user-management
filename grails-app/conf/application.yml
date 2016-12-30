@@ -2,7 +2,7 @@
 grails:
     profile: web-plugin
     codegen:
-        defaultPackage: user.management
+        defaultPackage: com.causecode
     spring:
         transactionManagement:
             proxies: false

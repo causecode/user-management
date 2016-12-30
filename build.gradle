@@ -1,27 +1,44 @@
 buildscript {
     repositories {
         mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://repo.grails.org/grails/core" }
+        mavenCentral()
+        maven {
+            credentials {
+                username mavenUser
+                password mavenPassword
+            }
+            url "http://maven.causecode.com"
+        }
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
+        classpath "com.causecode.plugins:gradle-code-quality:0.0.2"
     }
 }
 
-version "0.1"
-group "user.management"
+version "0.0.1"
+group "com.causecode.plugins"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
-apply plugin:"org.grails.grails-gsp"
-apply plugin:"asset-pipeline"
+apply plugin:'gradle-code-quality'
 
 repositories {
     mavenLocal()
+    mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
     maven { url "https://repo.grails.org/grails/core" }
+    maven {
+        credentials {
+            username ccRepoUser
+            password ccRepoPassword
+        }
+        url "http://maven.causecode.com"
+    }
 }
 
 dependencyManagement {
@@ -32,6 +49,7 @@ dependencyManagement {
 }
 
 dependencies {
+    // Default plugin dependencies shipped with grails 3.2.0
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
@@ -45,29 +63,82 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    provided "org.codehaus.groovy:groovy-ant"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
+    // Default dependency of plugin shipped with Grails 3.2.0 Not required for this plugin, so commented.
+    // provided "org.codehaus.groovy:groovy-ant"
+    // runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
     testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+
+    // CauseCode Dependencies
+    compile "com.causecode.plugins:nucleus:0.4.3"
+    compile "com.causecode.plugins:rest-security-core:0.0.1"
+
+    // Grails JSON Views
+    provided "org.grails.plugins:views-json:1.1.3"
+    provided "org.grails.plugins:views-json-templates:1.1.3"
+
+    // Grails Plugins
+    provided 'org.grails.plugins:quartz:2.0.9'
+    provided "org.grails.plugins:asynchronous-mail:2.0.0.RC4"
+    provided "org.grails.plugins:spring-security-core:3.1.1"
+
+    // Test Dependencies
+    testCompile "org.grails:grails-datastore-rest-client"
+
+    // Hibernate Dependencies
+    provided "org.grails.plugins:hibernate5"
+
+    // In memory H2 Database.
+    runtime "com.h2database:h2"
 }
+
+ccJacocoExt {
+    excludes = [
+        '**/Application*/**',
+        '**/UrlMappings*/**',
+    ]
+}
+
+project.publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from project.components.java
+
+            artifactId "user-management"
+
+            pom.withXml {
+                def pomNode = asNode()
+                // version-less dependencies are handled with dependencyManagement
+                pomNode.dependencies.dependency.findAll {
+                    it.version.text().isEmpty()
+                }.each {
+                    it.replaceNode {}
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username mavenPublishUser
+                password mavenPublishPassword
+            }
+            url "http://maven-upload.causecode.com"
+        }
+    }
+}
+
 grailsPublish {
-    // TODO: Provide values here
-    user = 'user'
-    key = 'key'
+    user = 'user'  // Not required if you defined BINARY_USER var
+    key = 'key'    // Not required if you defined BINARY_KEY var
+    userOrg = 'mycompany' // Optional
     githubSlug = 'foo/bar'
     license {
         name = 'Apache-2.0'
     }
-    title = "My Plugin"
-    desc = "Full plugin description"
-    developers = [johndoe:"John Doe"]
-    portalUser = ""
-    portalPassword = ""    
-}
-
-
-assets {
-    packagePlugin = true
+    title = "My Plugin Title"
+    desc = "My Plugin Description"
+    developers = [johndoe: "John Doe"]
 }
