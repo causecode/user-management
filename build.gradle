@@ -34,8 +34,8 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
     maven {
         credentials {
-            username ccRepoUser
-            password ccRepoPassword
+            username mavenUser
+            password mavenPassword
         }
         url "http://maven.causecode.com"
     }
