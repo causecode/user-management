@@ -14,11 +14,11 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.causecode.plugins:gradle-code-quality:0.0.2"
+        classpath "com.causecode.plugins:gradle-code-quality:0.0.3"
     }
 }
 
-version "0.0.1"
+version "0.0.2"
 group "com.causecode.plugins"
 
 apply plugin:"eclipse"
@@ -72,7 +72,7 @@ dependencies {
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
     // CauseCode Dependencies
-    compile "com.causecode.plugins:nucleus:0.4.3"
+    compile "com.causecode.plugins:nucleus:0.4.4"
     compile "com.causecode.plugins:rest-security-core:0.0.1"
 
     // Grails JSON Views
@@ -86,6 +86,7 @@ dependencies {
 
     // Test Dependencies
     testCompile "org.grails:grails-datastore-rest-client"
+    testRuntime "org.grails.plugins:mongodb"
 
     // Hibernate Dependencies
     provided "org.grails.plugins:hibernate5"
@@ -96,8 +97,12 @@ dependencies {
 
 ccJacocoExt {
     excludes = [
-        '**/Application*/**',
-        '**/UrlMappings*/**',
+            '**/Application*/**',
+            '**/UrlMappings*/**',
+            '**/CustomOauthUserDetailsService*/**',
+            '**/UserManagementUrlMappings*/**',
+            '**/UserManagementGrailsPlugin*/**',
+            '**/AuthenticationTokenCleanUpJob*/**'
     ]
 }
 
