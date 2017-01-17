@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or
+ * without modification, are not permitted.
+ */
 package com.causecode.user
 
 import grails.transaction.Transactional
@@ -14,8 +21,10 @@ class UserManagementService {
 
     /**
      * Used to fetch list of user for Mongo database with filters and pagination applied.
+     *
      * @param params List of parameters contains pagination, filter parameters.
      * @param paginate Boolean value to specify whether to use pagination parameters or not.
+     *
      * @return Filtered list of user's with distinct email.
      */
 
@@ -46,6 +55,7 @@ class UserManagementService {
                 }
             }
         }
+
         List result = User.createCriteria().list(params) {
             'in'('id', userList)
             if (params.letter) {
@@ -59,7 +69,8 @@ class UserManagementService {
                 }
             }
         }
-        result
+
+        return result
     }
 
     List getAppropiateIdList(List ids) {
@@ -76,6 +87,7 @@ class UserManagementService {
             Class objectIdClazz = Class.forName('org.bson.types.ObjectId')
             tempId = ids.collect { objectIdClazz.newInstance(it) }
         }
+
         return tempId.unique()
     }
 
@@ -83,6 +95,7 @@ class UserManagementService {
         if (params.dbType == 'Mongo') {
             return listForMongo(params)
         }
+
         return listForMysql(params)
     }
 
@@ -93,6 +106,7 @@ class UserManagementService {
      */
     Map listForMongo(Map params) {
         List result = fetchListForMongo(params)
+
         [instanceList: result, totalCount: result.totalCount]
     }
 
@@ -109,6 +123,7 @@ class UserManagementService {
         List<User> userInstanceList = []
         Map queryStringParams = [:]
         StringBuilder query = new StringBuilder('select distinct ur1.user from UserRole ur1')
+
         if (params.roleFilter) {
             List roleFilterList = params.roleFilter as List
             roleFilterList = roleFilterList*.toLong()
@@ -176,9 +191,11 @@ class UserManagementService {
         if (selectAll) {
             return getList(args)['instanceList']
         }
+
         if (selectedIds) {
             return User.getAll(getAppropiateIdList(selectedIds.tokenize(',')))
         }
+
         return []
     }
 }

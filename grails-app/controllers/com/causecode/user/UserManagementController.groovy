@@ -7,6 +7,7 @@
  */
 package com.causecode.user
 
+import com.causecode.RestfulController
 import com.causecode.util.NucleusUtils
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -20,19 +21,35 @@ import org.springframework.http.HttpStatus
  * @author Laxmi Salunkhe
  */
 @Secured(['ROLE_USER_MANAGER'])
-class UserManagementController {
+class UserManagementController extends RestfulController {
 
-    /**
-     * Dependency Injection for the exportService.
-     */
+    UserManagementController() {
+        super(User)
+    }
+
     ExportService exportService
-
-    /**
-     * Dependency Injection for the userManagementService.
-     */
     UserManagementService userManagementService
 
     static responseFormats = ['json']
+
+    /*
+     * Method that excludes admin user's ids from given list of user ids
+     *
+     * @params List userIds
+     *
+     * @return List userIds (excluded admin ids)
+     */
+    private List removeAdminIds(List userIds) {
+        Role adminRole = Role.findByAuthority('ROLE_ADMIN')
+        List adminUsersIds = UserRole.findAllByRole(adminRole)*.user*.id
+
+        log.info "Removing admin user ids: $adminUsersIds."
+
+        List nonAdminUserIds = userIds - adminUsersIds
+        log.info "Removed admin users: $nonAdminUserIds"
+
+        return nonAdminUserIds
+    }
 
     /**
      * List action used to fetch Role list and User's list with filters and pagination applied.
@@ -47,12 +64,14 @@ class UserManagementController {
         params.sort = params.sort ?: 'dateCreated'
         params.order = params.order ?: 'desc'
         tempDbType = tempDbType ?: 'Mysql'
+
         log.info "Params received to fetch users :$params"
 
         Map result = userManagementService."listFor${tempDbType}"(params)
         if (offset == 0) {
             result['roleList'] = Role.list(max: 50)
         }
+
         render result as JSON
     }
 
@@ -75,16 +94,12 @@ class UserManagementController {
         roleIds = roleIds*.toLong()
 
         if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            Role adminRole = Role.findByAuthority('ROLE_ADMIN')
-            List adminUsersIds = UserRole.findAllByRole(adminRole)*.user*.id
-            log.info "Removing admin user ids: $adminUsersIds."
-
-            userIds = userIds - adminUsersIds
-            log.info "Removed admin users: $userIds"
+            userIds = removeAdminIds(userIds)
             /*
              * If a User is trying to assign ADMIN Role to any User, he should not be allowed to do so.
                Only ADMIN Users can assign ADMIN role to other Users.
             */
+            Role adminRole = Role.findByAuthority('ROLE_ADMIN')
             roleIds -= adminRole.id
             log.info '[Not authorized] Removing Admin Role ids'
         }
@@ -94,18 +109,19 @@ class UserManagementController {
             if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
                 message += 'Users with role Admin are excluded from selected list.'
             }
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([success: false, message: message])
+
+            respondData([success: false, message: message], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
         if (!roleIds) {
             String message = 'No Roles selected.'
+
             if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
                 message += 'Only Users with Admin role can assign Admin roles.'
             }
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([success: false, message: message])
+
+            respondData([success: false, message: message], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
@@ -127,12 +143,13 @@ class UserManagementController {
         }
 
         if (failedUsersForRoleModification) {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([success: false, message: 'Unable to grant role for users with email(s)' +
-                    "${failedUsersForRoleModification.join(', ')}."])
+
+            respondData([success: false, message: 'Unable to grant role for users with email(s)' +
+                    "${failedUsersForRoleModification.join(', ')}."], [status: HttpStatus.NOT_ACCEPTABLE])
+            return
         }
 
-        respond([success: true, message: 'Roles updated succesfully.'])
+        respondData([success: true, message: 'Roles updated succesfully.'])
     }
 
     /**
@@ -143,6 +160,7 @@ class UserManagementController {
      * 2. false - Set User field lockAccount to false.
      * @return Renders message response in JSON format.
      */
+    // In case anything goes wrong while running database queries.
     @SuppressWarnings('CatchException')
     def lockUnlockUserAccounts() {
         params.putAll(request.JSON)
@@ -156,10 +174,7 @@ class UserManagementController {
         List selectedUserIds = userManagementService.getAppropiateIdList(params.selectedIds)
 
         if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            Role adminRole = Role.findByAuthority('ROLE_ADMIN')
-            List adminUsersIds = UserRole.findAllByRole(adminRole)*.user*.id
-            selectedUserIds = selectedUserIds - adminUsersIds
-            log.info "Removed admin users: $selectedUserIds"
+           selectedUserIds = removeAdminIds(selectedUserIds)
         }
 
         if (!selectedUserIds) {
@@ -167,8 +182,8 @@ class UserManagementController {
             if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
                 message += 'Users with role Admin are excluded from selected list.'
             }
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([success: false, message: message])
+
+            respondData([success: false, message: message], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
@@ -179,7 +194,8 @@ class UserManagementController {
                         [$set: [accountLocked: lockAccount]], false, true)
 
                 int updatedFields =  writeResult.n
-                respond([message: "Total $updatedFields user's account set to $lockAccount successfully.",
+
+                respondData([message: "Total $updatedFields user's account set to $lockAccount successfully.",
                         success: true])
             } else {
                 selectedUserIds = selectedUserIds*.toLong()
@@ -193,12 +209,14 @@ class UserManagementController {
                     userInstance.accountLocked = lockAccount
                     userInstance.save()
                 }
-                respond([message: "Successfully updated user's account status.", success: true])
+
+                respondData([message: "Successfully updated user's account status.", success: true])
             }
         } catch (Exception e) {
-            log.error 'Error enable/disable user.', e
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([message: 'Unable to enable/disable the user. Please try again.', success: false])
+            log.error 'Error lock/unlock user.', e
+
+            respondData([message: 'Unable to enable/disable the user. Please try again.', success: false],
+                    [status: HttpStatus.NOT_ACCEPTABLE])
         }
     }
 
@@ -245,8 +263,9 @@ class UserManagementController {
         log.debug "Params received to update email: $params"
 
         if (!params.id || !params.newEmail || !params.confirmNewEmail) {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([message: 'Please select a user and enter new & confirmation email.'])
+
+            respondData([message: 'Please select a user and enter new & confirmation email.'],
+                    [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
@@ -254,31 +273,34 @@ class UserManagementController {
         params.confirmNewEmail = params.confirmNewEmail.toLowerCase()
 
         if (params.newEmail != params.confirmNewEmail) {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([message: 'Email dose not match the Confirm Email.'])
+
+            respondData([message: 'Email does not match the Confirm Email.'], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
         if (User.countByEmail(params.newEmail)) {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([message: "User already exists with Email: $params.newEmail"])
+
+            respondData([message: "User already exists with Email: $params.newEmail"],
+                    [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
         User userInstance = User.get(params.id)
         if (!userInstance) {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
-            respond([message: "User not found with id: $params.id."])
+
+            respondData([message: "User not found with id: $params.id."], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
         userInstance.email = params.newEmail
         if (!NucleusUtils.save(userInstance, true)) {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE.value())
             log.warn "Error saving $userInstance $userInstance.errors"
-            respond([message: "Unable to update user's email.", error: userInstance.errors])
+
+            respondData([message: "Unable to update user's email.", error: userInstance.errors],
+                    [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
-        respond([message: 'Email updated Successfully.'])
+
+        respondData([message: 'Email updated Successfully.'])
     }
 }

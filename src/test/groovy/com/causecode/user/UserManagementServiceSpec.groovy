@@ -114,7 +114,7 @@ class UserManagementServiceSpec extends Specification {
 
         when: 'getList method is called and roleFilter is passed as List'
         Map params = [ offset: 0, max: 15, dbType: 'Mongo',
-                       roleFilter: [adminRole.id.toString()], roleType: 'Any Granted']
+                roleFilter: [adminRole.id.toString()], roleType: 'Any Granted']
         Map result = service.getList(params)
 
         then: 'Result map is returned'
@@ -168,7 +168,7 @@ class UserManagementServiceSpec extends Specification {
     void "test getList when roleFilter is not passed at all"() {
         given: 'Instance of User and Admin with appropriate roles'
         Map params = [offset: 0, max: 15, letter: 'a', roleFilter: adminRole.id.toString(),
-                      query: 'adm', dbType: 'Mongo']
+                query: 'adm', dbType: 'Mongo']
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, adminRole, true)
 

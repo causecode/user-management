@@ -23,7 +23,7 @@ import java.sql.SQLException
  * This class specifies unit test cases for {@link com.causecode.user.UserManagementController}
  */
 @TestFor(UserManagementController)
-@Mock([User, Role, UserRole, SpringSecurityService, ExportService])
+@Mock([User, Role, UserRole, ExportService])
 class UserManagementControllerSpec extends Specification {
 
     User adminUser, managerUser, normalUser, trialUser
@@ -97,7 +97,7 @@ class UserManagementControllerSpec extends Specification {
         assert userRole.save(flush: true)
     }
 
-    void 'test index action'() {
+    void "test index action"() {
         given:'User instance list and mocked UserManagementService'
         List<User> userInstanceList = [adminUser, normalUser]
         controller.userManagementService = [listForMysql: { Map params ->
@@ -125,7 +125,7 @@ class UserManagementControllerSpec extends Specification {
         controller.response.json.totalCount == 2
     }
 
-    void 'test Index action with date filter applied'() {
+    void "test Index action with date filter applied"() {
         given: 'User instance list and mocked UserManagementService'
         List<User> userInstanceList = [adminUser]
         controller.userManagementService = [listForMysql: { Map params ->
@@ -147,7 +147,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test if an ADMIN user tries to Modify role of another ADMIN user'() {
+    void "test if an ADMIN user tries to Modify role of another ADMIN user"() {
         given: 'ADMIN user logged-in for role modification'
         UserRole.create(managerUser, adminRole, true)
         controller.request.json = [userIds: [managerUser.id], roleIds: [adminRole.id, userManagerRole.id, userRole.id],
@@ -177,7 +177,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test if a ADMIN user modifies another users role without refresh mode'() {
+    void "test if a ADMIN user modifies another users role without refresh mode"() {
         given: 'Request for Role modification without Refresh mode'
         mockSpringSecurityUtils(true)
         controller.request.json = [roleActionType: '', userIds: [normalUser.id],
@@ -234,7 +234,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test if a Non-ADMIN user selects all admin users to modify role'() {
+    void "test if a Non-ADMIN user selects all admin users to modify role"() {
         given:'Mocking SpringSecurityUtils'
         mockSpringSecurityUtils(false)
         UserRole.create(adminUser, adminRole, true) // assigning admin role to admin user
@@ -258,7 +258,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test if a Non-ADMIN user tries to assign admin role to any user'() {
+    void "test if a Non-ADMIN user tries to assign admin role to any user"() {
         given:'Mocking SpringSecurityUtils'
         mockSpringSecurityUtils(false)
         assignRolesToUsers(adminRole, userRole, userRole)
@@ -290,7 +290,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test if modification of roles fail due to invalid instance'() {
+    void "test if modification of roles fail due to invalid instance"() {
         given:'Mocking SpringSecurityUtils'
         mockSpringSecurityUtils(true)
         assignRolesToUsers(adminRole, userRole, userRole)
@@ -316,7 +316,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test lockUnlockUserAccounts() to see if a NON-ADMIN user is trying to change status of an ADMIN user'() {
+    void "test lockUnlockUserAccounts() to see if a NON-ADMIN user is trying to change status of an ADMIN user"() {
         given: 'Deactivation request for 2 non-admin and 1 Admin user'
         mockSpringSecurityUtils(false)
         assignRolesToUsers(adminRole, userRole, userRole)
@@ -339,7 +339,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test makeUserInactive() when non-admin user tries to change active status of all admin users'() {
+    void "test makeUserInactive() when non-admin user tries to change active status of all admin users"() {
         given: 'Deactivation request for 3 admin users'
         mockSpringSecurityUtils(false)
         UserRole.create(adminUser, adminRole, true) // assigning admin role to admin user
@@ -367,7 +367,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test lockUnlockUserAccounts() if ADMIN user changes activation status of other ADMIN User'() {
+    void "test lockUnlockUserAccounts() if ADMIN user changes activation status of other ADMIN User"() {
         given: 'Admin user to perform Role modification'
         // USER_MANAGER with Admin role is currently logged in
         mockSpringSecurityUtils(true)
@@ -392,7 +392,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test lockUnlockUserAccounts() when no user Id is selected'() {
+    void "test lockUnlockUserAccounts() when no user Id is selected"() {
         given: 'Blank user id list or Admin Ids removed'
         controller.request.json = [selectedIds: [], lockAccount: true]
 
@@ -412,7 +412,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test if selectedUserId list is blank in modifyRoles action'() {
+    void "test if selectedUserId list is blank in modifyRoles action"() {
         when: 'Selected Ids are empty or Id is removed because of ADMIN permission'
         mockSpringSecurityUtils(true)
         Role userManagerRole = Role.findOrSaveByAuthority('ROLE_USER_MANAGER')
@@ -436,11 +436,11 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test modifyRole() if RoleIds are removed during authentication'() {
+    void "test modifyRole() if RoleIds are removed during authentication"() {
         given: 'Admin role id for modification'
         mockSpringSecurityUtils(true)
         controller.request.json = [ userIds: [trialUser.id, normalUser.id],
-                                    roleIds: [adminRole.id, userManagerRole.id, userRole.id]
+                roleIds: [adminRole.id, userManagerRole.id, userRole.id]
         ]
         controller.request.method = 'POST'
 
@@ -462,7 +462,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test modifyRole() if ADMIN user tries to assign Admin RoleIds in Refresh mode'() {
+    void "test modifyRole() if ADMIN user tries to assign Admin RoleIds in Refresh mode"() {
         given: 'Admin roleId for role modification'
         controller.request.json = [roleIds: [adminRole.id], userIds: [normalUser.id, trialUser.id],
                 roleActionType: 'refresh']
@@ -494,7 +494,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test modifyRole() if ADMIN user tries to assign Admin RoleIds in Append mode'() {
+    void "test modifyRole() if ADMIN user tries to assign Admin RoleIds in Append mode"() {
         given: 'Admin role id for modification'
         controller.request.json = [roleIds: [adminRole.id], userIds: [normalUser.id, trialUser.id],
                 roleActionType: 'refresh']
@@ -527,7 +527,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test lockUnlockUserAccounts() when exception is thrown'() {
+    void "test lockUnlockUserAccounts() when exception is thrown"() {
         // USER_MANAGER with Admin role is currently logged in
         given:'Mocking SpringSecurityUtils'
         mockSpringSecurityUtils(true)
@@ -560,7 +560,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test lockUnlockUserAccounts() to make users active'() {
+    void "test lockUnlockUserAccounts() to make users active"() {
         // USER_MANAGER with Admin role is currently logged in
         given: 'Mocking SpringSecurityUtils'
         mockSpringSecurityUtils(true)
@@ -591,7 +591,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test lockUnlockUserAccounts() when mongodb is used as database'() {
+    void "test lockUnlockUserAccounts() when mongodb is used as database"() {
         given: 'mocked instance'
         // USER_MANAGER with Admin role is currently logged in
         mockSpringSecurityUtils(true)
@@ -625,7 +625,7 @@ class UserManagementControllerSpec extends Specification {
         controller.response.json.success == true
     }
 
-    void 'test export action'() {
+    void "test export action"() {
         given: 'User details for export'
         controller.userManagementService = [getSelectedItemList: { boolean selectAll, String selectedIds, Map args ->
             return selectAll ? [adminUser, normalUser, managerUser, trialUser] : [adminUser, normalUser]
@@ -646,7 +646,7 @@ class UserManagementControllerSpec extends Specification {
         controller.response.status == 200
     }
 
-    void 'test updateEmail action for invalid or missing data'() {
+    void "test updateEmail action for invalid or missing data"() {
         given: 'request to updateEmail with missing data'
         controller.request.json = ['id': null, 'newEmail': null, 'confirmNewEmail': null]
         controller.request.method = 'POST'
@@ -659,22 +659,22 @@ class UserManagementControllerSpec extends Specification {
         controller.response.json.message.contains('Please select a user and enter new & confirmation email.')
     }
 
-    void 'test updateEmail action when email does not match the confirm email'() {
+    void "test updateEmail action when email does not match the confirm email"() {
         given: 'request with different email and confirm email'
         controller.request.json = ['id': adminUser.id, 'newEmail': 'admin@causecode.com',
                 'confirmNewEmail': 'adm@causecode.com']
-        controller.request.method = 'POST'
 
         when: 'Action is hit'
+        controller.request.method = 'POST'
         controller.updateEmail()
 
         then: 'Error message must be displayed'
         controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
-        controller.response.json.message.contains('Email dose not match the Confirm Email.')
+        controller.response.json.message.contains('Email does not match the Confirm Email.')
     }
 
     @DirtiesRuntime
-    void 'test updateEmail when user with entered email already exist'() {
+    void "test updateEmail when user with entered email already exist"() {
         given: 'request with existing email id'
         controller.request.json = ['id': adminUser.id, 'newEmail': 'admin@causecode.com',
                 'confirmNewEmail': 'admin@causecode.com']
@@ -693,7 +693,7 @@ class UserManagementControllerSpec extends Specification {
     }
 
     @DirtiesRuntime
-    void 'test updateEmail when user with entered email is not found'() {
+    void "test updateEmail when user with entered email is not found"() {
         given: 'request with existing email id'
         controller.request.json = ['id': adminUser.id, 'newEmail': 'admin@causecode.com',
                 'confirmNewEmail': 'admin@causecode.com']
@@ -711,7 +711,7 @@ class UserManagementControllerSpec extends Specification {
         controller.response.json.message.contains('User not found with id')
     }
 
-    void 'test updateEmail when userInstance is valid'() {
+    void "test updateEmail when userInstance is valid"() {
         given: 'request with different email and confirm email'
         controller.request.json = ['id': adminUser.id, 'newEmail': 'admin@causecode.com',
                 'confirmNewEmail': 'admin@causecode.com']

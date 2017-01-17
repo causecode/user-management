@@ -451,7 +451,7 @@ class UserControllerSpec extends Specification {
     }
 
     void "test update action for various cases"() {
-        given: 'An instance of User'
+        given: 'Few instances of User'
         User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
         userInstance.save()
         User userInstance1 = new User(email: 'cause1@code.com', password: 'test1@123', username: 'test1')
@@ -477,6 +477,9 @@ class UserControllerSpec extends Specification {
 
         GroovyMock(NucleusUtils, global: true)
         2 * NucleusUtils.save(_, _, _) >> {
+            userInstance.firstName = 'updatedUserName'
+            userInstance.save(flush: true)
+
             return true
         } >> {
             return false
@@ -498,6 +501,7 @@ class UserControllerSpec extends Specification {
 
         then: 'Instance is updated'
         controller.response.status == 200
+        userInstance.refresh().firstName == 'updatedUserName'
         controller.response.json.message == 'Successfully updated user details'
 
         when: 'update action is hit and user is authorised to edit the instance but fields contain errors'
@@ -548,5 +552,10 @@ class UserControllerSpec extends Specification {
 
         then: 'Server responds with user accessible data'
         controller.response.status == 200
+        noExceptionThrown()
+        controller.response.json.userInstance.email == userInstance.email
+        controller.response.json.userInstance.username == userInstance.username
+        // Password field would be null since it is not to be sent
+        controller.response.json.userInstance.password == null
     }
 }

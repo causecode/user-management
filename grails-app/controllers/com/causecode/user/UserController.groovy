@@ -64,7 +64,7 @@ class UserController extends RestfulController {
 
         if (NucleusUtils.save(userInstance, true)) {
             UserRole userRoleInstance = new UserRole([user: userInstance, role: Role.findByAuthority('ROLE_USER')])
-            NucleusUtils.save(userRoleInstance, true)
+            NucleusUtils.save(userRoleInstance, true, log)
         } else {
             String message = "Could not save User with email ${userInstance.email}"
             log.warn message
@@ -201,9 +201,9 @@ class UserController extends RestfulController {
         // Only non-admin fields are sent in response
         User instance = new User([id: userInstance.id, email: userInstance.email,
                 username: userInstance.username, firstName: userInstance.firstName, lastName: userInstance.lastName,
-                gender: userInstance.gender, birthDate: userInstance.birthdate])
+                gender: userInstance.gender, birthdate: userInstance.birthdate])
 
-        return ([userInstance: instance])
+        respond([userInstance: instance])
     }
 
     /*
@@ -224,6 +224,8 @@ class UserController extends RestfulController {
 
         if (!NucleusUtils.save(userInstance, true, log)) {
             respondData([message: 'Could not update user details'], [status: HttpStatus.NOT_ACCEPTABLE])
+
+            return
         }
 
         respondData([message: 'Successfully updated user details'])
