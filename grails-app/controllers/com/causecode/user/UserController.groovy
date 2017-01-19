@@ -198,12 +198,7 @@ class UserController extends RestfulController {
             return false
         }
 
-        // Only non-admin fields are sent in response
-        User instance = new User([id: userInstance.id, email: userInstance.email,
-                username: userInstance.username, firstName: userInstance.firstName, lastName: userInstance.lastName,
-                gender: userInstance.gender, birthdate: userInstance.birthdate])
-
-        respond([userInstance: instance])
+        respond(userInstance)
     }
 
     /*
@@ -223,7 +218,7 @@ class UserController extends RestfulController {
         bindData(userInstance, params, [exclude: ['email', 'username']])
 
         if (!NucleusUtils.save(userInstance, true, log)) {
-            respondData([message: 'Could not update user details'], [status: HttpStatus.NOT_ACCEPTABLE])
+            respondData([message: 'Could not update user details'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return
         }

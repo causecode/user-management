@@ -22,8 +22,15 @@ import org.grails.web.json.JSONWriter
  */
 @SuppressWarnings(['Instanceof'])
 class UserDomainMarshaller implements ObjectMarshaller<JSON> {
+
+    @Override
+    boolean supports(Object object) {
+        return object instanceof User
+    }
+
     @Override
     void marshalObject(Object object, JSON converter) throws ConverterException {
+
         User userInstance = object as User
         JSONWriter writer = converter.writer
 
@@ -52,9 +59,5 @@ class UserDomainMarshaller implements ObjectMarshaller<JSON> {
 
         writer.endObject()
     }
-
-    @Override
-    boolean supports(Object object) {
-        return object instanceof User
-    }
 }
+

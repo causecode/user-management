@@ -106,6 +106,7 @@ class UserManagementController extends RestfulController {
 
         if (!userIds) {
             String message = 'Please select at least one user.'
+
             if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
                 message += 'Users with role Admin are excluded from selected list.'
             }
@@ -143,9 +144,9 @@ class UserManagementController extends RestfulController {
         }
 
         if (failedUsersForRoleModification) {
-
             respondData([success: false, message: 'Unable to grant role for users with email(s)' +
-                    "${failedUsersForRoleModification.join(', ')}."], [status: HttpStatus.NOT_ACCEPTABLE])
+                    "${failedUsersForRoleModification.join(', ')}."], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
             return
         }
 
@@ -263,9 +264,9 @@ class UserManagementController extends RestfulController {
         log.debug "Params received to update email: $params"
 
         if (!params.id || !params.newEmail || !params.confirmNewEmail) {
-
             respondData([message: 'Please select a user and enter new & confirmation email.'],
-                    [status: HttpStatus.NOT_ACCEPTABLE])
+                    [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
             return
         }
 
@@ -273,31 +274,31 @@ class UserManagementController extends RestfulController {
         params.confirmNewEmail = params.confirmNewEmail.toLowerCase()
 
         if (params.newEmail != params.confirmNewEmail) {
+            respondData([message: 'Email does not match the Confirm Email.'], [status: HttpStatus.PRECONDITION_FAILED])
 
-            respondData([message: 'Email does not match the Confirm Email.'], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
         if (User.countByEmail(params.newEmail)) {
-
             respondData([message: "User already exists with Email: $params.newEmail"],
-                    [status: HttpStatus.NOT_ACCEPTABLE])
+                    [status: HttpStatus.CONFLICT])
+
             return
         }
 
         User userInstance = User.get(params.id)
         if (!userInstance) {
+            respondData([message: "User not found with id: $params.id."], [status: HttpStatus.NOT_FOUND])
 
-            respondData([message: "User not found with id: $params.id."], [status: HttpStatus.NOT_ACCEPTABLE])
             return
         }
 
         userInstance.email = params.newEmail
         if (!NucleusUtils.save(userInstance, true)) {
             log.warn "Error saving $userInstance $userInstance.errors"
-
             respondData([message: "Unable to update user's email.", error: userInstance.errors],
                     [status: HttpStatus.NOT_ACCEPTABLE])
+
             return
         }
 

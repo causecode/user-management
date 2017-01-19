@@ -310,7 +310,7 @@ class UserManagementControllerSpec extends Specification {
         controller.modifyRoles()
 
         then: 'All admin users must be removed from the list and status code 406 must be returned'
-        controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
+        controller.response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
         controller.response.json.success == false
         controller.response.json.message.contains('Unable to grant role for users with email(s)')
     }
@@ -655,7 +655,7 @@ class UserManagementControllerSpec extends Specification {
         controller.updateEmail()
 
         then: 'Error message must be displayed'
-        controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
+        controller.response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
         controller.response.json.message.contains('Please select a user and enter new & confirmation email.')
     }
 
@@ -669,7 +669,7 @@ class UserManagementControllerSpec extends Specification {
         controller.updateEmail()
 
         then: 'Error message must be displayed'
-        controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
+        controller.response.status == HttpStatus.PRECONDITION_FAILED.value()
         controller.response.json.message.contains('Email does not match the Confirm Email.')
     }
 
@@ -688,7 +688,7 @@ class UserManagementControllerSpec extends Specification {
         controller.updateEmail()
 
         then: 'Error message must be displayed'
-        controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
+        controller.response.status == HttpStatus.CONFLICT.value()
         controller.response.json.message.contains('User already exists with Email')
     }
 
@@ -707,7 +707,7 @@ class UserManagementControllerSpec extends Specification {
         controller.updateEmail()
 
         then: 'Error message must be displayed'
-        controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
+        controller.response.status == HttpStatus.NOT_FOUND.value()
         controller.response.json.message.contains('User not found with id')
     }
 

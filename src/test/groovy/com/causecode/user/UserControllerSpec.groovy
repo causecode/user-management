@@ -510,7 +510,7 @@ class UserControllerSpec extends Specification {
         controller.update()
 
         then: 'Instance is not updated'
-        controller.response.status == HttpStatus.NOT_ACCEPTABLE.value()
+        controller.response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
         controller.response.json.message == 'Could not update user details'
     }
 
@@ -553,9 +553,8 @@ class UserControllerSpec extends Specification {
         then: 'Server responds with user accessible data'
         controller.response.status == 200
         noExceptionThrown()
-        controller.response.json.userInstance.email == userInstance.email
-        controller.response.json.userInstance.username == userInstance.username
-        // Password field would be null since it is not to be sent
-        controller.response.json.userInstance.password == null
+        controller.response.json.id == userInstance.id
+        controller.response.json.email == userInstance.email
+        controller.response.json.username == userInstance.username
     }
 }
