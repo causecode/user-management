@@ -11,6 +11,9 @@ import org.apache.commons.lang.RandomStringUtils
 import spock.lang.Specification
 import spock.lang.Unroll
 
+/**
+ * This class specifies unit test cases for {@link com.causecode.validators.PasswordValidatorSpec}
+ */
 class PasswordValidatorSpec extends Specification {
 
     static String getRandomString() {
@@ -46,7 +49,7 @@ class PasswordValidatorSpec extends Specification {
         where:
         length | password          | expectedResult
         5      | 'cause'           | true
-        9      | getRandomString() | false
+        9      | randomString      | false
         0      | null              | false // Will return false which is correct as true will pass the validation.
     }
 

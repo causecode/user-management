@@ -18,6 +18,9 @@ import org.pac4j.oauth.profile.twitter.TwitterProfile
 import spock.lang.Specification
 import spock.lang.Unroll
 
+/**
+ * This class specifies unit test cases for {@link com.causecode.user.UserService}
+ */
 @TestFor(UserService)
 @Mock([User, UserRole, Role, OAuthAccount])
 class UserServiceSpec extends Specification {
@@ -53,7 +56,7 @@ class UserServiceSpec extends Specification {
 
     void "test createOAuthUser method for creating a User instance from CommonProfile object"() {
         given: 'An instance of CommonProfile'
-        CommonProfile commonProfile = getCommonProfileObject()
+        CommonProfile commonProfile = commonProfileObject
 
         Role.findOrCreateByAuthority('ROLE_USER').save()
 
@@ -74,7 +77,7 @@ class UserServiceSpec extends Specification {
 
     void "test createOAuthUser when user already exists with same email"() {
         given: 'An instance of CommonProfile'
-        CommonProfile commonProfile = getCommonProfileObject()
+        CommonProfile commonProfile = commonProfileObject
         Role.findOrCreateByAuthority('ROLE_USER').save()
 
         and: 'An User with same email'
@@ -101,9 +104,9 @@ class UserServiceSpec extends Specification {
 
         where:
         providerClassName           | oAuthProviderName
-        Google2Profile.simpleName   | "GOOGLE"
-        LinkedIn2Profile.simpleName | "LINKEDIN"
-        TwitterProfile.simpleName   | "TWITTER"
-        FacebookProfile.simpleName  | "FACEBOOK"
+        Google2Profile.simpleName   | 'GOOGLE'
+        LinkedIn2Profile.simpleName | 'LINKEDIN'
+        TwitterProfile.simpleName   | 'TWITTER'
+        FacebookProfile.simpleName  | 'FACEBOOK'
     }
 }
