@@ -14,6 +14,8 @@ import com.causecode.util.EmailService
 import com.causecode.validators.PasswordValidator
 import grails.core.GrailsApplication
 import grails.plugin.springsecurity.SpringSecurityService
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.rest.token.AccessToken
 import grails.plugin.springsecurity.rest.token.generation.TokenGenerator
 import grails.plugin.springsecurity.rest.token.storage.TokenStorageService
@@ -39,6 +41,19 @@ class UserController extends RestfulController {
         super(User)
     }
 
+    boolean checkIfPermitted(User userInstance) {
+        if (userInstance.username != springSecurityService.currentUser.username) {
+            if (!SpringSecurityUtils.ifAllGranted('ROLE_ADMIN')) {
+
+                render status: HttpStatus.UNAUTHORIZED.value
+
+                return false
+            }
+        }
+
+        return true
+    }
+
     def signUp() {
         Map requestData = request.JSON as Map
 
@@ -49,7 +64,7 @@ class UserController extends RestfulController {
 
         if (NucleusUtils.save(userInstance, true)) {
             UserRole userRoleInstance = new UserRole([user: userInstance, role: Role.findByAuthority('ROLE_USER')])
-            NucleusUtils.save(userRoleInstance, true)
+            NucleusUtils.save(userRoleInstance, true, log)
         } else {
             String message = "Could not save User with email ${userInstance.email}"
             log.warn message
@@ -169,5 +184,45 @@ class UserController extends RestfulController {
         authenticationToken.delete(flush: true)
 
         respondData([message: 'Password changed successfully.'])
+    }
+
+    /*
+     * An endpoint to show filtered user details.
+     * These details have been filtered and admin-accessible fields have been removed from response.
+     * @params userInstance
+     * @return objectInstance
+     */
+    @Secured(['ROLE_USER'])
+    def show(User userInstance) {
+        if (!checkIfPermitted(userInstance)) {
+            return false
+        }
+
+        respond(userInstance)
+    }
+
+    /*
+     * An endpoint to update user details.
+     * @params userInstance
+     * @return objectInstance
+     */
+    @Secured(['ROLE_USER'])
+    def update() {
+        params.putAll(request.JSON as Map)
+        User userInstance = User.get(params.id)
+
+        if (!userInstance || !checkIfPermitted(userInstance)) {
+            return
+        }
+
+        bindData(userInstance, params, [exclude: ['email', 'username']])
+
+        if (!NucleusUtils.save(userInstance, true, log)) {
+            respondData([message: 'Could not update user details'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return
+        }
+
+        respondData([message: 'Successfully updated user details'])
     }
 }

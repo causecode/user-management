@@ -13,6 +13,7 @@ import com.causecode.validators.PasswordValidatorSpec
 import grails.plugin.asyncmail.AsynchronousMailService
 import grails.plugin.json.view.JsonViewTemplateEngine
 import grails.plugin.springsecurity.SpringSecurityService
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.rest.token.AccessToken
 import grails.plugin.springsecurity.rest.token.generation.TokenGenerator
 import grails.plugin.springsecurity.rest.token.storage.TokenStorageService
@@ -25,6 +26,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 import spock.util.mop.ConfineMetaClassChanges
 
+/**
+ * This class specifies unit test cases for {@link com.causecode.user.UserController}
+ */
 @TestFor(UserController)
 @ConfineMetaClassChanges([SpringSecurityService])
 @Mock([User, Role, UserRole, SpringSecurityService, AuthenticationToken, AsynchronousMailService])
@@ -39,48 +43,49 @@ class UserControllerSpec extends Specification {
     void setup() {
         controller.springSecurityService = [reauthenticate: { String email ->
             return email
-        }] as SpringSecurityService
+        } ] as SpringSecurityService
 
         controller.tokenGenerator = [generateAccessToken: { UserDetails principal ->
             return new AccessToken('random1234')
-        }] as TokenGenerator
+        } ] as TokenGenerator
 
         controller.tokenStorageService = [storeToken: { String token, UserDetails principal ->
             return true
-        }] as TokenStorageService
+        } ] as TokenStorageService
 
         controller.emailService = [sendEmail: { Closure closure, String eventName ->
             new JsonBuilder() closure
             return true
-        }] as EmailService
+        } ] as EmailService
 
         new Role(authority: 'ROLE_USER').save()
+        new Role(authority: 'ROLE_ADMIN').save()
     }
 
     void mockEmailServiceForFailure() {
         controller.emailService = [sendEmail: { Closure closure, String eventName ->
             new JsonBuilder() closure
             return false
-        }] as EmailService
+        } ] as EmailService
     }
 
     @Unroll
     void "test index action for valid JSON response with max #max and offset #offset"() {
-        given: "Some User instances"
+        given: 'Some User instances'
         5.times {
             User userInstance = new User(email: "cause-${it + 1}@code.com", password: 'test@123',
                     username: "cause-${it + 1}")
             userInstance.save()
         }
 
-        when: "Index action is hit"
+        when: 'Index action is hit'
         controller.params.max = max
         controller.params.offset = offset
         controller.index()
 
         def result = model.instanceList
 
-        then: "A valid JSON response should be received"
+        then: 'A valid JSON response should be received'
         controller.response.status == HttpStatus.OK.value
         result.size() == size
         result[0].username == "cause-${offset ? (5 - offset) : 5}"
@@ -95,7 +100,7 @@ class UserControllerSpec extends Specification {
     }
 
     void "test index when a view template is defined for user domain"() {
-        given: "Mocked instance of JsonViewTemplateEngine to return true for domain template"
+        given: 'Mocked instance of JsonViewTemplateEngine to return true for domain template'
         JsonViewTemplateEngine.metaClass.resolveTemplate = { String template ->
             return true
         }
@@ -108,12 +113,12 @@ class UserControllerSpec extends Specification {
     }
 
     void "test delete action to return method not allowed"() {
-        when: "delete action is hit"
+        when: 'delete action is hit'
         controller.delete()
 
-        then: "Method not allowed status is received"
+        then: 'Method not allowed status is received'
         response.status == HttpStatus.METHOD_NOT_ALLOWED.value
-        response.json.message == "Method not allowed"
+        response.json.message == 'Method not allowed'
     }
 
     @Unroll
@@ -202,6 +207,17 @@ class UserControllerSpec extends Specification {
         assert userInstance.id
 
         when: 'The forgotPassword action is hit with above parameters'
+        controller.request.method = 'POST'
+        controller.request.json = data
+        controller.forgotPassword()
+
+        then: 'Password link should be sent'
+        response.status == HttpStatus.OK.value
+        response.json.message == 'Password reset link sent successfully.'
+
+        when: 'AuthenticationToken already exists for a user'
+        controller.response.reset()
+        assert AuthenticationToken.findByEmail(userInstance.email).count() == 1
         controller.request.method = 'POST'
         controller.request.json = data
         controller.forgotPassword()
@@ -432,5 +448,113 @@ class UserControllerSpec extends Specification {
         response.json.list == ['list', 'test']
         response.json.invalidUser.errors[0].message == 'Property [username] of class [class com.causecode.user.User] ' +
                 'cannot be null'
+    }
+
+    void "test update action for various cases"() {
+        given: 'Few instances of User'
+        User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
+        userInstance.save()
+        User userInstance1 = new User(email: 'cause1@code.com', password: 'test1@123', username: 'test1')
+        userInstance1.save()
+        Map userData = [id: userInstance.id, firstName: 'updatedUsername']
+
+        assert User.count() == 2
+
+        and: 'Mocked SpringSecurityService method'
+        controller.springSecurityService = Mock(SpringSecurityService)
+        3 * controller.springSecurityService.currentUser >> {
+            return userInstance1
+        } >> {
+            return userInstance
+        } >> {
+            return userInstance
+        }
+
+        GroovyMock(SpringSecurityUtils, global: true)
+        1 * SpringSecurityUtils.ifAllGranted(_) >> {
+            return false
+        }
+
+        GroovyMock(NucleusUtils, global: true)
+        2 * NucleusUtils.save(_, _, _) >> {
+            userInstance.firstName = 'updatedUserName'
+            userInstance.save(flush: true)
+
+            return true
+        } >> {
+            return false
+        }
+
+        when: 'update action is hit and user is not authorised to edit the instance'
+        controller.request.method = 'GET'
+        controller.request.json = userData
+        controller.update()
+
+        then: 'Server responds with Unauthorised status code and instance is not updated'
+        controller.response.status == HttpStatus.UNAUTHORIZED.value()
+        userInstance.refresh().username == 'test'
+
+        when: 'update action is hit and user is authorised to edit the instance'
+        controller.response.reset()
+        controller.request.json = userData
+        controller.update()
+
+        then: 'Instance is updated'
+        controller.response.status == 200
+        userInstance.refresh().firstName == 'updatedUserName'
+        controller.response.json.message == 'Successfully updated user details'
+
+        when: 'update action is hit and user is authorised to edit the instance but fields contain errors'
+        controller.response.reset()
+        controller.request.json = [username: null]
+        controller.update()
+
+        then: 'Instance is not updated'
+        controller.response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
+        controller.response.json.message == 'Could not update user details'
+    }
+
+    void "test show action for various cases"() {
+        given: 'User instances'
+        User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
+        userInstance.save()
+        User userInstance1 = new User(email: 'cause1@code.com', password: 'test1@123', username: 'test1')
+        userInstance1.save()
+
+        assert User.count() == 2
+
+        and: 'Mocked SpringSecurity methods'
+        controller.springSecurityService = Mock(SpringSecurityService)
+        2 * controller.springSecurityService.currentUser >> {
+            return userInstance1
+        } >> {
+            return userInstance
+        }
+
+        GroovyMock(SpringSecurityUtils, global: true)
+        1 * SpringSecurityUtils.ifAllGranted(_) >> {
+            return false
+        }
+
+        when: 'show action is hit and user is not authorised to see the instance'
+        controller.request.method = 'GET'
+        controller.params.id = userInstance.id
+        controller.show()
+
+        then: 'Server responds with Unauthorised status code'
+        controller.response.status == HttpStatus.UNAUTHORIZED.value()
+
+        when: 'show action is hit and user is authorised to see the instance'
+        controller.response.reset()
+        controller.request.method = 'GET'
+        controller.params.id = userInstance.id
+        controller.show()
+
+        then: 'Server responds with user accessible data'
+        controller.response.status == 200
+        noExceptionThrown()
+        controller.response.json.id == userInstance.id
+        controller.response.json.email == userInstance.email
+        controller.response.json.username == userInstance.username
     }
 }
