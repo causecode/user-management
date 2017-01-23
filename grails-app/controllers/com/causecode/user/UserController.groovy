@@ -13,6 +13,7 @@ import com.causecode.util.NucleusUtils
 import com.causecode.util.EmailService
 import com.causecode.validators.PasswordValidator
 import grails.core.GrailsApplication
+import grails.gsp.PageRenderer
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
@@ -27,6 +28,7 @@ import org.springframework.http.HttpStatus
  * @author Nikhil Sharma
  * @since 0.0.1
  */
+@Secured(['permitAll'])
 class UserController extends RestfulController {
 
     static namespace = 'v1'
@@ -36,6 +38,7 @@ class UserController extends RestfulController {
     TokenStorageService tokenStorageService
     EmailService emailService
     GrailsApplication grailsApplication
+    PageRenderer pageRenderer
 
     UserController() {
         super(User)
@@ -58,9 +61,8 @@ class UserController extends RestfulController {
         Map requestData = request.JSON as Map
 
         User userInstance = new User()
-        userInstance.email = requestData.email
-        userInstance.password = requestData.password
-        userInstance.username = requestData.username ?: userInstance.email
+
+        bindData(userInstance, requestData)
 
         if (NucleusUtils.save(userInstance, true)) {
             UserRole userRoleInstance = new UserRole([user: userInstance, role: Role.findByAuthority('ROLE_USER')])
@@ -92,7 +94,9 @@ class UserController extends RestfulController {
         AccessToken accessTokenInstance = tokenGenerator.generateAccessToken(springSecurityService.principal)
         tokenStorageService.storeToken(accessTokenInstance.accessToken, springSecurityService.principal)
 
-        respondData(user: userInstance, access_token: accessTokenInstance.accessToken)
+        requestData.access_token = accessTokenInstance.accessToken
+
+        redirect(url: grailsApplication.config.grails.postRegistrationURL, params: requestData)
     }
 
     def forgotPassword() {
@@ -122,11 +126,14 @@ class UserController extends RestfulController {
 
         String url = grailsApplication.config.grails.passwordRecoveryURL + authenticationToken.token
 
+        String bodyText = pageRenderer.render([template: "/email-templates/resetPasswordEmail",
+                model: [userInstance: userInstance, url: url]])
+
         String eventName = 'Password Recovery'
         Closure emailTemplate = {
             to userInstance.email
             subject eventName
-            text "Follow this link to reset your password ${url}"
+            text bodyText
             immediate true
         }
 

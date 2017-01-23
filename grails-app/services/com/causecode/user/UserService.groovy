@@ -30,8 +30,8 @@ class UserService {
     void saveOAuthUser(CommonProfile commonProfile) {
         Map dataProperties = [email: commonProfile.email, password: commonProfile.id, username:
                 commonProfile.username ?: commonProfile.email, gender: commonProfile.gender?.name().toLowerCase(),
-                              firstName: commonProfile.firstName, lastName: commonProfile.familyName,
-                              pictureURL: commonProfile.pictureUrl]
+                firstName: commonProfile.firstName, lastName: commonProfile.familyName,
+                pictureURL: commonProfile.pictureUrl]
 
         User userInstance = new User(dataProperties)
 
