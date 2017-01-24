@@ -8,6 +8,7 @@
 package com.causecode.user
 
 import com.causecode.util.NucleusUtils
+import grails.core.GrailsApplication
 import grails.transaction.Transactional
 import org.pac4j.core.profile.CommonProfile
 
@@ -19,6 +20,23 @@ import org.pac4j.core.profile.CommonProfile
  */
 @Transactional
 class UserService {
+
+    GrailsApplication grailsApplication
+
+    List<User> findAllByAuthority(List<String> authority, Map args = [:]) {
+        def roleList = Role.findAllByAuthorityInList(authority)
+        return UserRole.createCriteria().list {
+            projections {
+                distinct("user")
+            }
+            'in'("role", roleList)
+        }
+    }
+
+    String getPasswordResetLink() {
+        ConfigObject configObject = grailsApplication.config.grails
+        return configObject.passwordRecoveryURL ?: configObject.serverURL + '/auth/reset-password?validate=true&token='
+    }
 
     /**
      * Creates a User from the CommonProfile object after the OAuth process. This method is only called when the User

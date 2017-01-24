@@ -71,7 +71,7 @@ dependencies {
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
     // CauseCode Dependencies
-    compile "com.causecode.plugins:nucleus:0.4.4"
+    compile "com.causecode.plugins:nucleus:0.4.5"
     compile "com.causecode.plugins:rest-security-core:0.0.1"
 
     // Grails JSON Views
