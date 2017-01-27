@@ -7,10 +7,10 @@
  */
 package com.causecode.user
 
+import com.causecode.util.GenericEmailService
 import com.causecode.util.NucleusUtils
-import com.causecode.util.EmailService
 import com.causecode.validators.PasswordValidatorSpec
-import grails.plugin.asyncmail.AsynchronousMailService
+import grails.gsp.PageRenderer
 import grails.plugin.json.view.JsonViewTemplateEngine
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -19,7 +19,9 @@ import grails.plugin.springsecurity.rest.token.generation.TokenGenerator
 import grails.plugin.springsecurity.rest.token.storage.TokenStorageService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.runtime.FreshRuntime
 import groovy.json.JsonBuilder
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.UserDetails
 import spock.lang.Specification
@@ -29,18 +31,24 @@ import spock.util.mop.ConfineMetaClassChanges
 /**
  * This class specifies unit test cases for {@link com.causecode.user.UserController}
  */
+@FreshRuntime
 @TestFor(UserController)
-@ConfineMetaClassChanges([SpringSecurityService])
-@Mock([User, Role, UserRole, SpringSecurityService, AuthenticationToken, AsynchronousMailService])
+@Mock([User, Role, UserRole, AuthenticationToken])
 class UserControllerSpec extends Specification {
 
-    void setupSpec() {
-        SpringSecurityService.metaClass.encodePassword = { String password ->
-            return password
-        }
+    PageRenderer groovyPageRenderer = Mock(PageRenderer)
+    GenericEmailService genericEmailService = Mock(GenericEmailService)
+
+    def doWithSpring = {
+        genericEmailService(InstanceFactoryBean, genericEmailService, GenericEmailService)
+        groovyPageRenderer(InstanceFactoryBean, groovyPageRenderer, PageRenderer)
     }
 
     void setup() {
+        User.metaClass.encodePassword = {
+            return 'password'
+        }
+
         controller.springSecurityService = [reauthenticate: { String email ->
             return email
         } ] as SpringSecurityService
@@ -53,20 +61,15 @@ class UserControllerSpec extends Specification {
             return true
         } ] as TokenStorageService
 
-        controller.emailService = [sendEmail: { Closure closure, String eventName ->
-            new JsonBuilder() closure
-            return true
-        } ] as EmailService
-
         new Role(authority: 'ROLE_USER').save()
         new Role(authority: 'ROLE_ADMIN').save()
     }
 
-    void mockEmailServiceForFailure() {
-        controller.emailService = [sendEmail: { Closure closure, String eventName ->
+    void mockSendEmail(boolean value) {
+        genericEmailService.sendEmail(_, _) >> { Closure closure, String eventName ->
             new JsonBuilder() closure
-            return false
-        } ] as EmailService
+            return value
+        }
     }
 
     @Unroll
@@ -121,67 +124,6 @@ class UserControllerSpec extends Specification {
         response.json.message == 'Method not allowed'
     }
 
-    @Unroll
-    void "test user signup for failure when email is #email, password is #password and username is #username"() {
-        given: 'The request parameters'
-        Map data = [email: email, password: password, username: username]
-
-        when: 'The signup action is hit with above parameters'
-        controller.request.method = 'POST'
-        controller.request.json = data
-        controller.signUp()
-
-        then: 'User should not be created'
-        response.status == HttpStatus.UNPROCESSABLE_ENTITY.value
-        response.json.message == message
-
-        where:
-        email            | password    | username | message
-        null             | null        | null     | 'Could not save User with email null'
-        'cause@code.com' | null        | 'test'   | 'Could not save User with email cause@code.com'
-        null             | 'test@1234' | ''       | 'Could not save User with email null'
-        ''               | ''          | ''       | 'Could not save User with email '
-    }
-
-    void "test user signup when exception occurs while sending email"() {
-        given: 'The request parameters'
-        Map data = [email: 'cause@code.com', password: 'test@1234', username: 'test']
-
-        assert User.count() == 0
-
-        and: 'Mocked EmailService for returning false'
-        mockEmailServiceForFailure()
-
-        when: 'The signup action is hit with above parameters'
-        controller.request.method = 'POST'
-        controller.request.json = data
-        controller.signUp()
-
-        then: 'An User is successfully created'
-        User.count() == 1
-        response.status == HttpStatus.EXPECTATION_FAILED.value
-        response.json.message == 'Could not send verification email.'
-    }
-
-    void "test user signup for success when email, password and username parameters are correct"() {
-        given: 'The request parameters'
-        Map data = [email: 'cause@code.com', password: 'test@1234', username: 'test']
-
-        assert User.count() == 0
-
-        when: 'The signup action is hit with above parameters'
-        controller.request.method = 'POST'
-        controller.request.json = data
-        controller.signUp()
-
-        then: 'An User is successfully created'
-        User.count() == 1
-        response.status == HttpStatus.OK.value
-        response.json.user.email == data.email
-        response.json.user.username == data.username
-        response.json.access_token == 'random1234'
-    }
-
     void "test forgotPassword for failure when user with sent email is not found"() {
         given: 'The request parameters'
         Map data = [email: 'cause@code.com']
@@ -206,14 +148,23 @@ class UserControllerSpec extends Specification {
 
         assert userInstance.id
 
+        and: 'Mocked service method call'
+        controller.userService = Mock(UserService)
+        2 * controller.userService.passwordResetLink >> {
+            return 'http://localhost:8080/resetPassword'
+        }
+
+        and: 'Mocked sendEmail method'
+        mockSendEmail(true)
+
         when: 'The forgotPassword action is hit with above parameters'
         controller.request.method = 'POST'
         controller.request.json = data
         controller.forgotPassword()
 
         then: 'Password link should be sent'
-        response.status == HttpStatus.OK.value
         response.json.message == 'Password reset link sent successfully.'
+        response.status == HttpStatus.OK.value
 
         when: 'AuthenticationToken already exists for a user'
         controller.response.reset()
@@ -223,11 +174,10 @@ class UserControllerSpec extends Specification {
         controller.forgotPassword()
 
         then: 'Password link should be sent'
-        response.status == HttpStatus.OK.value
         response.json.message == 'Password reset link sent successfully.'
+        response.status == HttpStatus.OK.value
     }
 
-    @ConfineMetaClassChanges([NucleusUtils])
     void "test forgotPassword for failure when AuthenticationToken is not saved"() {
         given: 'The request parameters'
         Map data = [email: 'cause@code.com']
@@ -238,7 +188,8 @@ class UserControllerSpec extends Specification {
 
         assert userInstance.id
 
-        NucleusUtils.metaClass.static.save = { Object object, boolean flush ->
+        GroovyMock(NucleusUtils, global: true)
+        NucleusUtils.save(_, _) >> {
             return false
         }
 
@@ -262,7 +213,14 @@ class UserControllerSpec extends Specification {
 
         assert userInstance.id
 
-        mockEmailServiceForFailure()
+        and: 'Mocked userService method call'
+        controller.userService = Mock(UserService)
+        1 * controller.userService.passwordResetLink >> {
+            return 'http://localhost:8080/resetPassword'
+        }
+
+        and: 'Mocked sendEmail method'
+        mockSendEmail(false)
 
         when: 'The forgotPassword action is hit with above parameters'
         controller.request.method = 'POST'
@@ -270,7 +228,7 @@ class UserControllerSpec extends Specification {
         controller.forgotPassword()
 
         then: 'Password link should be not sent'
-        response.status == HttpStatus.OK.value
+        response.status == HttpStatus.EXPECTATION_FAILED.value()
         response.json.message == 'Could not send password recovery link.'
     }
 
@@ -556,5 +514,132 @@ class UserControllerSpec extends Specification {
         controller.response.json.id == userInstance.id
         controller.response.json.email == userInstance.email
         controller.response.json.username == userInstance.username
+    }
+
+    void "test user signup when exception occurs while sending email"() {
+        given: 'The request parameters'
+        Map data = [email: 'cause@code.com', password: 'test@1234', username: 'test']
+
+        assert User.count() == 0
+
+        and: 'Mocked NucleusUtils method call for captchaValidation'
+        GroovyMock(NucleusUtils, global: true)
+        1 * NucleusUtils.validateGoogleReCaptcha(_) >> {
+            return true
+        }
+        1 * NucleusUtils.save(_, _) >> {
+            return true
+        }
+
+        and: 'Mocked sendEmail method'
+        mockSendEmail(false)
+
+        when: 'The signup action is hit with above parameters and mail could not be sent'
+        controller.request.method = 'POST'
+        controller.request.json = data
+        controller.signUp()
+
+        then: 'Server responds with error message'
+        response.json.message == 'Could not send verification email.'
+        response.status == HttpStatus.EXPECTATION_FAILED.value
+    }
+
+    void "test user signup for success when email, password and username parameters are correct"() {
+        given: 'The request parameters'
+        Map data = [email: 'cause@code.com', password: 'test@1234', username: 'test']
+
+        assert User.count() == 0
+
+        and: 'Mocked NucleusUtils method call for captcha validation'
+        GroovyMock(NucleusUtils, global: true)
+        1 * NucleusUtils.validateGoogleReCaptcha(_) >> {
+            return true
+        }
+        1 * NucleusUtils.save(_, _) >> {
+            return true
+        }
+
+        and: 'Mocked sendEmail method'
+        mockSendEmail(true)
+
+        when: 'The signup action is hit with above parameters'
+        controller.request.method = 'POST'
+        controller.request.json = data
+        controller.signUp()
+
+        then: 'A User is successfully created and access_token is generated for that user'
+        response.status == HttpStatus.OK.value
+        controller.response.json.access_token == 'random1234'
+    }
+
+    @Unroll
+    void "test user signup for failure when email is #email, password is #password and username is #username"() {
+        given: 'The request parameters'
+        Map data = [email: email, password: password, username: username]
+
+        and: 'Mocked NucleusUtils method call for captcha validation'
+        GroovyMock(NucleusUtils, global: true)
+        1 * NucleusUtils.validateGoogleReCaptcha(_) >> {
+            return true
+        }
+
+        1 * NucleusUtils.save(_, _) >> {
+            return false
+        }
+
+        when: 'The signup action is hit with above parameters'
+        controller.request.method = 'POST'
+        controller.request.json = data
+        controller.signUp()
+
+        then: 'User should not be created'
+        response.status == HttpStatus.UNPROCESSABLE_ENTITY.value
+        response.json.message == message
+
+        where:
+        email            | password    | username | message
+        null             | null        | null     | 'Could not save User with email null'
+        'cause@code.com' | null        | 'test'   | 'Could not save User with email cause@code.com'
+        null             | 'test@1234' | ''       | 'Could not save User with email null'
+        'test'           | ''          | ''       | 'Could not save User with email test'
+    }
+
+    void "test validatePasswordResetToken for various cases"() {
+        given: 'An instance of AuthenticationToken'
+        AuthenticationToken authenticationToken = new AuthenticationToken(email: 'test@causecode.com',
+                token: 'testTokenString')
+        authenticationToken.save(flush: true)
+
+        assert authenticationToken.id
+
+        when: 'validatePasswordResetToken action is hit and token is invalid'
+        controller.request.method = 'GET'
+        controller.params.token = 'invalidToken'
+        controller.validatePasswordResetToken()
+
+        then: 'Server responds with error code and appropriate message'
+        controller.response.status == HttpStatus.UNAUTHORIZED.value()
+        controller.response.json.message == 'Password link has expired. Please generate a new reset link.'
+
+        when: 'validatePasswordResetToken action is hit and token is valid'
+        controller.response.reset()
+        controller.request.method = 'GET'
+        controller.params.token = 'testTokenString'
+        controller.validatePasswordResetToken()
+
+        then: 'Server responds true'
+        controller.response.status == HttpStatus.OK.value()
+    }
+
+    void "test signup action when captcha validation fails"() {
+        when: 'signUp action is hit and captcha validation fails'
+        controller.request.method = 'POST'
+        controller.request.json = [myRecaptchaResponse: 'testCaptchaResponse']
+        controller.signUp()
+
+        then: 'Server responds with appropriate status and message'
+        controller.response.status == HttpStatus.EXPECTATION_FAILED.value()
+        controller.response.json.message == 'Captcha Validation Failed'
+
     }
 }

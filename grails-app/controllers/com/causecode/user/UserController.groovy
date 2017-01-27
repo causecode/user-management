@@ -59,6 +59,12 @@ class UserController extends RestfulController {
     def signUp() {
         Map requestData = request.JSON as Map
 
+        if (!NucleusUtils.validateGoogleReCaptcha(requestData.myRecaptchaResponse)) {
+            respondData([message: 'Captcha Validation Failed'], [status: HttpStatus.EXPECTATION_FAILED])
+
+            return false
+        }
+
         User userInstance = new User()
 
         bindData(userInstance, requestData)
@@ -121,9 +127,9 @@ class UserController extends RestfulController {
             return
         }
 
-        String url = userService.getPasswordResetLink() + authenticationToken.token
+        String url = userService.passwordResetLink + authenticationToken.token
 
-        String bodyText = groovyPageRenderer.render([template: "/email-templates/resetPasswordEmail",
+        String bodyText = groovyPageRenderer.render([template: '/email-templates/resetPasswordEmail',
                 model: [userInstance: userInstance, url: url]])
 
         String eventName = 'Password Recovery'
@@ -137,11 +143,18 @@ class UserController extends RestfulController {
         String message = 'Password reset link sent successfully.'
         if (!sendEmail(emailTemplate, eventName)) {
             message = 'Could not send password recovery link.'
+            response.setStatus(HttpStatus.EXPECTATION_FAILED.value)
         }
 
         respondData([message: message])
     }
 
+    /**
+     * This endpoint verifies that token present in email-link should match token present in authentication_token table.
+     *
+     * @params
+     * @return
+     */
     def validatePasswordResetToken() {
         String token = params.token
 
@@ -209,7 +222,7 @@ class UserController extends RestfulController {
      * @params userInstance
      * @return objectInstance
      */
-    @Secured(['ROLE_EMPLOYEE'])
+    @Secured(['ROLE_USER'])
     def show(User userInstance) {
         if (!checkIfPermitted(userInstance)) {
             return false
@@ -223,7 +236,7 @@ class UserController extends RestfulController {
      * @params userInstance
      * @return objectInstance
      */
-    @Secured(['ROLE_EMPLOYEE'])
+    @Secured(['ROLE_USER'])
     def update() {
         params.putAll(request.JSON as Map)
         User userInstance = User.get(params.id)

@@ -23,16 +23,30 @@ class UserService {
 
     GrailsApplication grailsApplication
 
-    List<User> findAllByAuthority(List<String> authority, Map args = [:]) {
-        def roleList = Role.findAllByAuthorityInList(authority)
+    /**
+     * Method to get all the matching Users.
+     *
+     * @params List authority
+     * @params Map args
+     *
+     * @return List UserRole
+     */
+    List<User> findAllByAuthority(List<String> authority) {
+        List roleList = Role.findAllByAuthorityInList(authority)
         return UserRole.createCriteria().list {
             projections {
-                distinct("user")
+                distinct('user')
             }
-            'in'("role", roleList)
+            'in'('role', roleList)
         }
     }
 
+    /**
+     * Method to get password reset link to be sent in email.
+     *
+     * @params
+     * @return String URL
+     */
     String getPasswordResetLink() {
         ConfigObject configObject = grailsApplication.config.grails
         return configObject.passwordRecoveryURL ?: configObject.serverURL + '/auth/reset-password?validate=true&token='

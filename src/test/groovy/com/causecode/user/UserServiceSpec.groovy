@@ -54,6 +54,14 @@ class UserServiceSpec extends Specification {
         return commonProfile
     }
 
+    void "test findAllByAuthority method to return matching UserRoles"() {
+        when: 'findAllByAuthority method is called and no matching users are found'
+        List users = service.findAllByAuthority(['ROLE_USER'])
+
+        then: 'Method returns empty list'
+        users == []
+    }
+
     void "test createOAuthUser method for creating a User instance from CommonProfile object"() {
         given: 'An instance of CommonProfile'
         CommonProfile commonProfile = commonProfileObject
@@ -108,5 +116,13 @@ class UserServiceSpec extends Specification {
         LinkedIn2Profile.simpleName | 'LINKEDIN'
         TwitterProfile.simpleName   | 'TWITTER'
         FacebookProfile.simpleName  | 'FACEBOOK'
+    }
+
+    void "test getPasswordResetLink method to return resetPasswordLink"() {
+        given: 'Grials configurations'
+        grailsApplication.config.grails.passwordRecoveryURL = 'http://test.com'
+
+        expect:
+        service.passwordResetLink == 'http://test.com'
     }
 }
