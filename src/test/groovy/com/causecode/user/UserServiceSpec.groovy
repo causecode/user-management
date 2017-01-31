@@ -55,11 +55,20 @@ class UserServiceSpec extends Specification {
     }
 
     void "test findAllByAuthority method to return matching UserRoles"() {
-        when: 'findAllByAuthority method is called and no matching users are found'
+        given: 'Instances of User, Role and UserRole'
+        User userInstance = new User(email: 'test@unit.com', password: 'test@123', username: 'test').save()
+        Role roleInstance = new Role([authority: 'ROLE_USER']).save()
+        UserRole userRoleInstance = new UserRole(user: userInstance, role: roleInstance).save()
+
+        assert userInstance.id
+        assert roleInstance.id
+        assert userRoleInstance.id
+
+        when: 'findAllByAuthority method is called'
         List users = service.findAllByAuthority(['ROLE_USER'])
 
-        then: 'Method returns empty list'
-        users == []
+        then: 'Method returns List of matching Users'
+        users == [userInstance]
     }
 
     void "test createOAuthUser method for creating a User instance from CommonProfile object"() {
@@ -119,7 +128,7 @@ class UserServiceSpec extends Specification {
     }
 
     void "test getPasswordResetLink method to return resetPasswordLink"() {
-        given: 'Grials configurations'
+        given: 'Grails configurations'
         grailsApplication.config.grails.passwordRecoveryURL = 'http://test.com'
 
         expect:

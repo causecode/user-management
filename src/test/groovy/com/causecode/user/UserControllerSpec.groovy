@@ -72,6 +72,13 @@ class UserControllerSpec extends Specification {
         }
     }
 
+    String mockGetPasswordResetLink() {
+        controller.userService = Mock(UserService)
+        controller.userService.passwordResetLink >> {
+            return 'http://localhost:8080/resetPassword'
+        }
+    }
+
     @Unroll
     void "test index action for valid JSON response with max #max and offset #offset"() {
         given: 'Some User instances'
@@ -149,10 +156,7 @@ class UserControllerSpec extends Specification {
         assert userInstance.id
 
         and: 'Mocked service method call'
-        controller.userService = Mock(UserService)
-        2 * controller.userService.passwordResetLink >> {
-            return 'http://localhost:8080/resetPassword'
-        }
+        mockGetPasswordResetLink()
 
         and: 'Mocked sendEmail method'
         mockSendEmail(true)
@@ -214,10 +218,7 @@ class UserControllerSpec extends Specification {
         assert userInstance.id
 
         and: 'Mocked userService method call'
-        controller.userService = Mock(UserService)
-        1 * controller.userService.passwordResetLink >> {
-            return 'http://localhost:8080/resetPassword'
-        }
+        mockGetPasswordResetLink()
 
         and: 'Mocked sendEmail method'
         mockSendEmail(false)
@@ -247,11 +248,12 @@ class UserControllerSpec extends Specification {
     }
 
     void "test resetPassword when authentication token is correct" () {
-        given: 'The request parameters'
-        Map data = [password: 'Test@1234', password2: 'Test@1234', token: 'hjagdjhsfgjs33jh43424']
-
+        given: 'An instance of AuthenticationToken and the request parameters'
         User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
         userInstance.save()
+
+        Map data = [password: 'Test@1234', password2: 'Test@1234', token: 'hjagdjhsfgjs33jh43424',
+                email: userInstance.email]
 
         assert userInstance.id
 
@@ -273,11 +275,11 @@ class UserControllerSpec extends Specification {
 
     @Unroll
     void "test resetPassword for validation failure when password is #password" () {
-        given: 'The request parameters'
-        Map data = [password: password, password2: password, token: 'hjagdjhsfgjs33jh43424']
-
+        given: 'An instance of AuthenticationToken and the request parameters'
         User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
         userInstance.save()
+
+        Map data = [password: password, password2: password, token: 'hjagdjhsfgjs33jh43424', email: userInstance.email]
 
         assert userInstance.id
 
@@ -305,12 +307,13 @@ class UserControllerSpec extends Specification {
     }
 
     void "test resetPassword when user is not found for the authentication token" () {
-        given: 'The request parameters'
-        Map data = [password: 'test@1234', password2: 'test@1234', token: 'hjagdjhsfgjs33jh43424']
-
+        given: 'AuthenticationToken instance and the request parameters'
         AuthenticationToken authenticationToken = new AuthenticationToken(email: 'cause@code.com',
                 token: 'hjagdjhsfgjs33jh43424')
         authenticationToken.save()
+
+        Map data = [password: 'test@1234', password2: 'test@1234', token: 'hjagdjhsfgjs33jh43424',
+                email: 'cause@code.com']
 
         assert authenticationToken.id
 
@@ -326,11 +329,12 @@ class UserControllerSpec extends Specification {
 
     @ConfineMetaClassChanges([NucleusUtils])
     void "test resetPassword when user cannot be saved after updation" () {
-        given: 'The request parameters'
-        Map data = [password: 'test@1234', password2: 'test@1234', token: 'hjagdjhsfgjs33jh43424']
-
+        given: 'An instance of AuthenticationToken and the request parameters'
         User userInstance = new User(email: 'cause@code.com', password: 'test@123', username: 'test')
         userInstance.save()
+
+        Map data = [password: 'test@1234', password2: 'test@1234', token: 'hjagdjhsfgjs33jh43424',
+                email: userInstance.email]
 
         assert userInstance.id
 
@@ -614,6 +618,7 @@ class UserControllerSpec extends Specification {
 
         when: 'validatePasswordResetToken action is hit and token is invalid'
         controller.request.method = 'GET'
+        controller.params.email = 'test@causecode.com'
         controller.params.token = 'invalidToken'
         controller.validatePasswordResetToken()
 
@@ -625,6 +630,7 @@ class UserControllerSpec extends Specification {
         controller.response.reset()
         controller.request.method = 'GET'
         controller.params.token = 'testTokenString'
+        controller.params.email = 'test@causecode.com'
         controller.validatePasswordResetToken()
 
         then: 'Server responds true'
@@ -640,6 +646,5 @@ class UserControllerSpec extends Specification {
         then: 'Server responds with appropriate status and message'
         controller.response.status == HttpStatus.EXPECTATION_FAILED.value()
         controller.response.json.message == 'Captcha Validation Failed'
-
     }
 }

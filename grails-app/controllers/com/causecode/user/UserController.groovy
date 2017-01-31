@@ -60,6 +60,7 @@ class UserController extends RestfulController {
         Map requestData = request.JSON as Map
 
         if (!NucleusUtils.validateGoogleReCaptcha(requestData.myRecaptchaResponse)) {
+            log.error('Captcha validation failed.')
             respondData([message: 'Captcha Validation Failed'], [status: HttpStatus.EXPECTATION_FAILED])
 
             return false
@@ -122,12 +123,13 @@ class UserController extends RestfulController {
         }
 
         if (!save(authenticationToken, true)) {
+            log.error('Could not save authentication token')
             respondData([message: 'Password recovery failed. Please contact support.'])
 
             return
         }
 
-        String url = userService.passwordResetLink + authenticationToken.token
+        String url = userService.passwordResetLink + authenticationToken.token + '&email=' + authenticationToken.email
 
         String bodyText = groovyPageRenderer.render([template: '/email-templates/resetPasswordEmail',
                 model: [userInstance: userInstance, url: url]])
@@ -152,13 +154,14 @@ class UserController extends RestfulController {
     /**
      * This endpoint verifies that token present in email-link should match token present in authentication_token table.
      *
-     * @params
-     * @return
+     * @params String token
+     * @return true for valid token and UNAUTHORIZED status for invalid token.
      */
     def validatePasswordResetToken() {
         String token = params.token
+        String email = params.email
 
-        AuthenticationToken authenticationToken = AuthenticationToken.findByToken(token)
+        AuthenticationToken authenticationToken = AuthenticationToken.findByEmailAndToken(email, token)
         if (authenticationToken) {
 
             return true
@@ -175,8 +178,9 @@ class UserController extends RestfulController {
                 password2: requestData.password2)
 
         String token = requestData.token
+        String email = requestData.email
 
-        AuthenticationToken authenticationToken = AuthenticationToken.findByToken(token)
+        AuthenticationToken authenticationToken = AuthenticationToken.findByEmailAndToken(email, token)
         if (!authenticationToken) {
             respondData([message: 'Unauthorized User'], [status: HttpStatus.UNAUTHORIZED])
 
