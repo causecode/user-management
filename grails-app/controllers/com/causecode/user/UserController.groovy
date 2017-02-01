@@ -10,9 +10,9 @@ package com.causecode.user
 import com.causecode.RestfulController
 import com.causecode.exceptions.InvalidParameterException
 import com.causecode.util.NucleusUtils
-import com.causecode.util.EmailService
 import com.causecode.validators.PasswordValidator
 import grails.core.GrailsApplication
+import grails.gsp.PageRenderer
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus
  * @author Nikhil Sharma
  * @since 0.0.1
  */
+@Secured(['permitAll'])
 class UserController extends RestfulController {
 
     static namespace = 'v1'
@@ -34,8 +35,9 @@ class UserController extends RestfulController {
     SpringSecurityService springSecurityService
     TokenGenerator tokenGenerator
     TokenStorageService tokenStorageService
-    EmailService emailService
     GrailsApplication grailsApplication
+    PageRenderer groovyPageRenderer
+    UserService userService
 
     UserController() {
         super(User)
@@ -57,10 +59,16 @@ class UserController extends RestfulController {
     def signUp() {
         Map requestData = request.JSON as Map
 
+        if (!NucleusUtils.validateGoogleReCaptcha(requestData.myRecaptchaResponse)) {
+            log.error('Captcha validation failed.')
+            respondData([message: 'Captcha Validation Failed'], [status: HttpStatus.EXPECTATION_FAILED])
+
+            return false
+        }
+
         User userInstance = new User()
-        userInstance.email = requestData.email
-        userInstance.password = requestData.password
-        userInstance.username = requestData.username ?: userInstance.email
+
+        bindData(userInstance, requestData)
 
         if (NucleusUtils.save(userInstance, true)) {
             UserRole userRoleInstance = new UserRole([user: userInstance, role: Role.findByAuthority('ROLE_USER')])
@@ -77,11 +85,11 @@ class UserController extends RestfulController {
         Closure emailTemplate = {
             to userInstance.email
             subject eventName
-            text 'Account successfully created. Use your email address as the username and password.'
+            text 'Account successfully created.'
             immediate true
         }
 
-        if (!emailService.sendEmail(emailTemplate, eventName)) {
+        if (!sendEmail(emailTemplate, eventName)) {
             respondData([message: 'Could not send verification email.'], [status: HttpStatus.EXPECTATION_FAILED])
 
             return false
@@ -107,35 +115,60 @@ class UserController extends RestfulController {
 
         String token = UUID.randomUUID().toString().replaceAll('-', '')
 
-        AuthenticationToken authenticationToken = AuthenticationToken.findByEmail(email)
+        AuthenticationToken authenticationToken = AuthenticationToken.findByEmail(userInstance.email)
         if (authenticationToken) {
             authenticationToken.token = token
         } else {
             authenticationToken = new AuthenticationToken(email: userInstance.email, token: token)
         }
 
-        if (!NucleusUtils.save(authenticationToken, true)) {
+        if (!save(authenticationToken, true)) {
+            log.error('Could not save authentication token')
             respondData([message: 'Password recovery failed. Please contact support.'])
 
             return
         }
 
-        String url = grailsApplication.config.grails.passwordRecoveryURL + authenticationToken.token
+        String url = userService.passwordResetLink + authenticationToken.token + '&email=' + authenticationToken.email
+
+        String bodyText = groovyPageRenderer.render([template: '/email-templates/resetPasswordEmail',
+                model: [userInstance: userInstance, url: url]])
 
         String eventName = 'Password Recovery'
         Closure emailTemplate = {
             to userInstance.email
             subject eventName
-            text "Follow this link to reset your password ${url}"
+            html bodyText
             immediate true
         }
 
         String message = 'Password reset link sent successfully.'
-        if (!emailService.sendEmail(emailTemplate, eventName)) {
+        if (!sendEmail(emailTemplate, eventName)) {
             message = 'Could not send password recovery link.'
+            response.setStatus(HttpStatus.EXPECTATION_FAILED.value)
         }
 
         respondData([message: message])
+    }
+
+    /**
+     * This endpoint verifies that token present in email-link should match token present in authentication_token table.
+     *
+     * @params String token
+     * @return true for valid token and UNAUTHORIZED status for invalid token.
+     */
+    def validatePasswordResetToken() {
+        String token = params.token
+        String email = params.email
+
+        AuthenticationToken authenticationToken = AuthenticationToken.findByEmailAndToken(email, token)
+        if (authenticationToken) {
+
+            return true
+        }
+
+        respondData([message: 'Password link has expired. Please generate a new reset link.'],
+                [status: HttpStatus.UNAUTHORIZED])
     }
 
     def resetPassword() {
@@ -145,8 +178,9 @@ class UserController extends RestfulController {
                 password2: requestData.password2)
 
         String token = requestData.token
+        String email = requestData.email
 
-        AuthenticationToken authenticationToken = AuthenticationToken.findByToken(token)
+        AuthenticationToken authenticationToken = AuthenticationToken.findByEmailAndToken(email, token)
         if (!authenticationToken) {
             respondData([message: 'Unauthorized User'], [status: HttpStatus.UNAUTHORIZED])
 

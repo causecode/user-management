@@ -54,6 +54,23 @@ class UserServiceSpec extends Specification {
         return commonProfile
     }
 
+    void "test findAllByAuthority method to return matching UserRoles"() {
+        given: 'Instances of User, Role and UserRole'
+        User userInstance = new User(email: 'test@unit.com', password: 'test@123', username: 'test').save()
+        Role roleInstance = new Role([authority: 'ROLE_USER']).save()
+        UserRole userRoleInstance = new UserRole(user: userInstance, role: roleInstance).save()
+
+        assert userInstance.id
+        assert roleInstance.id
+        assert userRoleInstance.id
+
+        when: 'findAllByAuthority method is called'
+        List users = service.findAllByAuthority(['ROLE_USER'])
+
+        then: 'Method returns List of matching Users'
+        users == [userInstance]
+    }
+
     void "test createOAuthUser method for creating a User instance from CommonProfile object"() {
         given: 'An instance of CommonProfile'
         CommonProfile commonProfile = commonProfileObject
@@ -108,5 +125,13 @@ class UserServiceSpec extends Specification {
         LinkedIn2Profile.simpleName | 'LINKEDIN'
         TwitterProfile.simpleName   | 'TWITTER'
         FacebookProfile.simpleName  | 'FACEBOOK'
+    }
+
+    void "test getPasswordResetLink method to return resetPasswordLink"() {
+        given: 'Grails configurations'
+        grailsApplication.config.grails.passwordRecoveryURL = 'http://test.com'
+
+        expect:
+        service.passwordResetLink == 'http://test.com'
     }
 }

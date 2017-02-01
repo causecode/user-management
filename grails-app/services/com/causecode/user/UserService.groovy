@@ -8,6 +8,7 @@
 package com.causecode.user
 
 import com.causecode.util.NucleusUtils
+import grails.core.GrailsApplication
 import grails.transaction.Transactional
 import org.pac4j.core.profile.CommonProfile
 
@@ -20,6 +21,37 @@ import org.pac4j.core.profile.CommonProfile
 @Transactional
 class UserService {
 
+    GrailsApplication grailsApplication
+
+    /**
+     * Method to get all the matching Users.
+     *
+     * @params List authority (List of Roles.)
+     *
+     * @return List UserRole
+     */
+    List<User> findAllByAuthority(List<String> authority) {
+        List roleList = Role.findAllByAuthorityInList(authority)
+
+        return UserRole.createCriteria().list {
+            projections {
+                distinct('user')
+            }
+            'in'('role', roleList)
+        }
+    }
+
+    /**
+     * Method to get password reset link to be sent in email.
+     *
+     * @return String URL
+     */
+    String getPasswordResetLink() {
+        ConfigObject configObject = grailsApplication.config.grails
+
+        return configObject.passwordRecoveryURL ?: configObject.serverURL + '/auth/reset-password?validate=true&token='
+    }
+
     /**
      * Creates a User from the CommonProfile object after the OAuth process. This method is only called when the User
      * doesn't already exists.
@@ -30,8 +62,8 @@ class UserService {
     void saveOAuthUser(CommonProfile commonProfile) {
         Map dataProperties = [email: commonProfile.email, password: commonProfile.id, username:
                 commonProfile.username ?: commonProfile.email, gender: commonProfile.gender?.name().toLowerCase(),
-                              firstName: commonProfile.firstName, lastName: commonProfile.familyName,
-                              pictureURL: commonProfile.pictureUrl]
+                firstName: commonProfile.firstName, lastName: commonProfile.familyName,
+                pictureURL: commonProfile.pictureUrl]
 
         User userInstance = new User(dataProperties)
 
