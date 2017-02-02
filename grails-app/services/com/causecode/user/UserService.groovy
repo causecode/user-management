@@ -49,7 +49,7 @@ class UserService {
     String getPasswordResetLink() {
         ConfigObject configObject = grailsApplication.config.grails
 
-        return configObject.passwordRecoveryURL ?: configObject.serverURL + '/auth/reset-password?validate=true&token='
+        return configObject.passwordRecoveryURL
     }
 
     /**

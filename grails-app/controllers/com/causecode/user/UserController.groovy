@@ -19,6 +19,7 @@ import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.rest.token.AccessToken
 import grails.plugin.springsecurity.rest.token.generation.TokenGenerator
 import grails.plugin.springsecurity.rest.token.storage.TokenStorageService
+import grails.transaction.Transactional
 import org.springframework.http.HttpStatus
 
 /**
@@ -38,6 +39,7 @@ class UserController extends RestfulController {
     GrailsApplication grailsApplication
     PageRenderer groovyPageRenderer
     UserService userService
+    UserHookService userHookService
 
     UserController() {
         super(User)
@@ -56,8 +58,11 @@ class UserController extends RestfulController {
         return true
     }
 
+    @Transactional
     def signUp() {
         Map requestData = request.JSON as Map
+
+        userHookService.preUserSignup()
 
         if (!NucleusUtils.validateGoogleReCaptcha(requestData.myRecaptchaResponse)) {
             log.error('Captcha validation failed.')
@@ -70,13 +75,31 @@ class UserController extends RestfulController {
 
         bindData(userInstance, requestData)
 
-        if (NucleusUtils.save(userInstance, true)) {
+        if (NucleusUtils.save(userInstance, false)) {
             UserRole userRoleInstance = new UserRole([user: userInstance, role: Role.findByAuthority('ROLE_USER')])
-            NucleusUtils.save(userRoleInstance, true, log)
+            NucleusUtils.save(userRoleInstance, false, log)
         } else {
             String message = "Could not save User with email ${userInstance.email}"
             log.warn message
             respondData([message: message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
+
+        springSecurityService.reauthenticate(userInstance.email)
+
+        AccessToken accessTokenInstance = tokenGenerator.generateAccessToken(springSecurityService.principal)
+        tokenStorageService.storeToken(accessTokenInstance.accessToken, springSecurityService.principal)
+
+        log.debug('Calling onCreateUser hook')
+
+        boolean onCreateHookResponse = userHookService.onCreateUser(userInstance)
+
+        if (!onCreateHookResponse) {
+            transactionStatus.setRollbackOnly()
+            log.error('User signup failed')
+            respondData([message: 'User signup failed, Please contact administrator'],
+                    [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }
@@ -95,10 +118,7 @@ class UserController extends RestfulController {
             return false
         }
 
-        springSecurityService.reauthenticate(userInstance.email)
-
-        AccessToken accessTokenInstance = tokenGenerator.generateAccessToken(springSecurityService.principal)
-        tokenStorageService.storeToken(accessTokenInstance.accessToken, springSecurityService.principal)
+        userHookService.postUserSignup()
 
         respondData(user: userInstance, access_token: accessTokenInstance.accessToken)
     }
@@ -126,10 +146,19 @@ class UserController extends RestfulController {
             log.error('Could not save authentication token')
             respondData([message: 'Password recovery failed. Please contact support.'])
 
-            return
+            return false
         }
 
-        String url = userService.passwordResetLink + authenticationToken.token + '&email=' + authenticationToken.email
+        String passwordResetLink = userService.passwordResetLink
+
+        if (!passwordResetLink) {
+            log.error('Could not find password reset link')
+            respondData([message: 'Password recovery failed. Please contact support.'])
+
+            return false
+        }
+
+        String url = passwordResetLink + authenticationToken.token + '&email=' + authenticationToken.email
 
         String bodyText = groovyPageRenderer.render([template: '/email-templates/resetPasswordEmail',
                 model: [userInstance: userInstance, url: url]])
@@ -184,7 +213,7 @@ class UserController extends RestfulController {
         if (!authenticationToken) {
             respondData([message: 'Unauthorized User'], [status: HttpStatus.UNAUTHORIZED])
 
-            return
+            return false
         }
 
         resetPasswordValidator.email = authenticationToken.email
@@ -196,7 +225,7 @@ class UserController extends RestfulController {
             String error = resetPasswordValidator.errors.getFieldError('password').code
             respondData([message: error], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
-            return
+            return false
         }
 
         User userInstance = User.findByEmail(authenticationToken.email)
@@ -205,14 +234,14 @@ class UserController extends RestfulController {
             log.warn "User not found for token ${authenticationToken}"
             respondData([message: 'User not found.'], [status: HttpStatus.UNAUTHORIZED])
 
-            return
+            return false
         }
 
         userInstance.password = resetPasswordValidator.password
         if (!NucleusUtils.save(userInstance, true)) {
             respondData([message: 'Password recovery failed. Please try again or contact support.'])
 
-            return
+            return false
         }
 
         authenticationToken.delete(flush: true)
@@ -246,7 +275,7 @@ class UserController extends RestfulController {
         User userInstance = User.get(params.id)
 
         if (!userInstance || !checkIfPermitted(userInstance)) {
-            return
+            return false
         }
 
         bindData(userInstance, params, [exclude: ['email', 'username']])
@@ -254,7 +283,7 @@ class UserController extends RestfulController {
         if (!NucleusUtils.save(userInstance, true, log)) {
             respondData([message: 'Could not update user details'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
-            return
+            return false
         }
 
         respondData([message: 'Successfully updated user details'])

@@ -7,6 +7,7 @@
  */
 package com.causecode
 
+import com.causecode.user.DefaultUserHookService
 import grails.plugins.Plugin
 import com.causecode.spring.rest.CustomOauthUserDetailsService
 import com.causecode.util.CustomUserDetailsService
@@ -42,6 +43,7 @@ class UserManagementGrailsPlugin extends Plugin {
     Closure doWithSpring() { { ->
             userDetailsService(CustomUserDetailsService)
             oauthUserDetailsService(CustomOauthUserDetailsService)
+            userHookService(DefaultUserHookService)
         }
     }
 }

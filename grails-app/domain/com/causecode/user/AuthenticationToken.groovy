@@ -31,7 +31,6 @@ class AuthenticationToken {
     }
 
     static constraints = {
-        email unique: true
         token unique: true
     }
 
