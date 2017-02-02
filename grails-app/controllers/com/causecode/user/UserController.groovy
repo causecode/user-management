@@ -153,7 +153,8 @@ class UserController extends RestfulController {
 
         if (!passwordResetLink) {
             log.error('Could not find password reset link')
-            respondData([message: 'Password recovery failed. Please contact support.'])
+            respondData([message: 'Password recovery failed. Please contact support.'],
+                    [status: HttpStatus.EXPECTATION_FAILED])
 
             return false
         }

@@ -7,6 +7,7 @@
  */
 package com.causecode.user
 
+import groovy.util.logging.Slf4j
 import javax.activity.InvalidActivityException
 
 /**
@@ -21,6 +22,7 @@ import javax.activity.InvalidActivityException
  * @author Ankit Agrawal
  * @since 0.0.4
  */
+@Slf4j
 class DefaultUserHookService implements UserHookService {
 
     /**

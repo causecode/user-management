@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, CauseCode Technologies Pvt Ltd, India.
+ * Copyright (c) 2017, CauseCode Technologies Pvt Ltd, India.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
@@ -180,6 +180,20 @@ class UserControllerSpec extends Specification {
         then: 'Password link should be sent'
         response.json.message == 'Password reset link sent successfully.'
         response.status == HttpStatus.OK.value
+
+        when: 'passwordRecoveryLink is not found'
+        controller.userService = Mock(UserService)
+        1 * controller.userService.passwordResetLink >> {
+            return null
+        }
+        controller.response.reset()
+        controller.request.method = 'POST'
+        controller.request.json = data
+        controller.forgotPassword()
+
+        then: 'Password reset link won\'t be sent and server responds with appropriate message and status'
+        response.json.message == 'Password recovery failed. Please contact support.'
+        response.status == HttpStatus.EXPECTATION_FAILED.value()
     }
 
     void "test forgotPassword for failure when AuthenticationToken is not saved"() {
@@ -524,6 +538,15 @@ class UserControllerSpec extends Specification {
         given: 'The request parameters'
         Map data = [email: 'cause@code.com', password: 'test@1234', username: 'test']
 
+        and: 'Mocked DefaultUserHookService methods'
+        controller.userHookService = Mock(DefaultUserHookService)
+        1 * controller.userHookService.preUserSignup() >> {
+            return
+        }
+        1 * controller.userHookService.onCreateUser(_) >> {
+            return true
+        }
+
         assert User.count() == 0
 
         and: 'Mocked NucleusUtils method call for captchaValidation'
@@ -554,6 +577,18 @@ class UserControllerSpec extends Specification {
 
         assert User.count() == 0
 
+        and: 'Mocked DefaultUserHookService methods'
+        controller.userHookService = Mock(DefaultUserHookService)
+        1 * controller.userHookService.preUserSignup() >> {
+            return
+        }
+        1 * controller.userHookService.onCreateUser(_) >> {
+            return true
+        }
+        1 * controller.userHookService.postUserSignup() >> {
+            return
+        }
+
         and: 'Mocked NucleusUtils method call for captcha validation'
         GroovyMock(NucleusUtils, global: true)
         1 * NucleusUtils.validateGoogleReCaptcha(_) >> {
@@ -580,6 +615,12 @@ class UserControllerSpec extends Specification {
     void "test user signup for failure when email is #email, password is #password and username is #username"() {
         given: 'The request parameters'
         Map data = [email: email, password: password, username: username]
+
+        and: 'Mocked DefaultUserHookService methods'
+        controller.userHookService = Mock(DefaultUserHookService)
+        1 * controller.userHookService.preUserSignup() >> {
+            return
+        }
 
         and: 'Mocked NucleusUtils method call for captcha validation'
         GroovyMock(NucleusUtils, global: true)
@@ -638,6 +679,12 @@ class UserControllerSpec extends Specification {
     }
 
     void "test signup action when captcha validation fails"() {
+        given: 'Mocked DefaultUserHookService methods'
+        controller.userHookService = Mock(DefaultUserHookService)
+        1 * controller.userHookService.preUserSignup() >> {
+            return
+        }
+
         when: 'signUp action is hit and captcha validation fails'
         controller.request.method = 'POST'
         controller.request.json = [myRecaptchaResponse: 'testCaptchaResponse']
@@ -646,5 +693,34 @@ class UserControllerSpec extends Specification {
         then: 'Server responds with appropriate status and message'
         controller.response.status == HttpStatus.EXPECTATION_FAILED.value()
         controller.response.json.message == 'Captcha Validation Failed'
+    }
+
+    void "test signUp action when error occurs for any of the hooks"() {
+        given: 'Mocked DefaultUserHookService methods'
+        controller.userHookService = Mock(DefaultUserHookService)
+        1 * controller.userHookService.preUserSignup() >> {
+            return
+        }
+        1 * controller.userHookService.onCreateUser(_) >> {
+            return false
+        }
+
+        and: 'Mocked NucleusUtils method call for captcha validation'
+        GroovyMock(NucleusUtils, global: true)
+        1 * NucleusUtils.validateGoogleReCaptcha(_) >> {
+            return true
+        }
+        1 * NucleusUtils.save(_, _) >> {
+            return true
+        }
+
+        when: 'signUp action is hit and error occures in onCreateUser hook'
+        controller.request.method = 'POST'
+        controller.request.json = [myRecaptchaResponse: 'testCaptchaResponse']
+        controller.signUp()
+
+        then: 'Server reponds with appropriate message and status code'
+        response.json.message == 'User signup failed, Please contact administrator'
+        response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
     }
 }
