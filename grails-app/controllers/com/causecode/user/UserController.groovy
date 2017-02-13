@@ -152,7 +152,7 @@ class UserController extends RestfulController {
         String passwordResetLink = userService.passwordResetLink
 
         if (!passwordResetLink) {
-            log.error('Could not find password reset link')
+            log.error('PasswordResetLink not configured in the installing App.')
             respondData([message: 'Password recovery failed. Please contact support.'],
                     [status: HttpStatus.EXPECTATION_FAILED])
 

@@ -11,13 +11,8 @@ import groovy.util.logging.Slf4j
 import javax.activity.InvalidActivityException
 
 /**
- * This class defines default implementation of hooks during a user signup process.
- * Bean for this class has been injected as userHookService within doWithSpring closure in
- * UserManagementPlugin.groovy file.
- *
- * Installing application should create a class(say CustomUserHookService) which implements UserHookService interface
- * and then override the injected userHookService bean, and inject it for the above specified
- * class(CustomUserHookService) in resources.groovy file in order to override these methods.
+ * This class is the default implementation of UserHookService. This class is injected as userHookService bean.
+ * Check Plugin descriptor file (UserManagementGrailsPlugin.groovy) for bean override.
  *
  * @author Ankit Agrawal
  * @since 0.0.4
@@ -26,17 +21,24 @@ import javax.activity.InvalidActivityException
 class DefaultUserHookService implements UserHookService {
 
     /**
-     * This web hook gets called to check if user signup feature has been enabled. By default it has been disabled.
+     * This webhook gets called to check if user signup feature has been enabled. By default it has been disabled.
      * Installing app needs to override this method to enable signup.
      */
     void preUserSignup() {
         log.debug 'Executing pre-user-signup hook from user-management plugin'
 
-        throw new InvalidActivityException('User signup feature has been disabled')
+        return
     }
 
     /**
-     * A method used to call certain method an application might need during signUp process.
+     * This method acts as the onCreateUser event handler. When a User is successfully created in the signup process,
+     * this method is called to perform additional operations. The default implementation is empty but the installing
+     * app can override and do some post creation operations here.
+     *
+     * @params User userInstance
+     * @return boolean
+     *     - true: on successful execution of operation.
+     *     - false: If operation fails.
      */
     @SuppressWarnings('UnusedMethodParameter')
     boolean onCreateUser(User userInstance) {
@@ -44,7 +46,8 @@ class DefaultUserHookService implements UserHookService {
     }
 
     /**
-     * A method which can be overridden to execute certain part of code once a new user is created with signup.
+     * This method is called once the signup process is completed and User has been notified via an email.
+     * This method can be used to perform post signup operations.
      */
     void postUserSignup() {
         return

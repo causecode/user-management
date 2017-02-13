@@ -11,10 +11,12 @@ import com.causecode.user.DefaultUserHookService
 import grails.plugins.Plugin
 import com.causecode.spring.rest.CustomOauthUserDetailsService
 import com.causecode.util.CustomUserDetailsService
+import groovy.util.logging.Slf4j
 
 /**
  * This is the Plugin descriptor file for User Management Plugin.
  */
+@Slf4j
 class UserManagementGrailsPlugin extends Plugin {
 
     def grailsVersion = '3.2.0 > *'
@@ -36,7 +38,7 @@ class UserManagementGrailsPlugin extends Plugin {
 
     /*
      * Note: Few default methods that were not required were removed. Please refer plugin docs if required.
-     * Removed methods: doWithApplicationContext, doWithDynamicMethods, onChange, onConfigChange
+     * Removed methods: doWithDynamicMethods, onChange, onConfigChange
      * and onShutdown.
      */
 
@@ -44,6 +46,16 @@ class UserManagementGrailsPlugin extends Plugin {
             userDetailsService(CustomUserDetailsService)
             oauthUserDetailsService(CustomOauthUserDetailsService)
             userHookService(DefaultUserHookService)
+        }
+    }
+
+    @SuppressWarnings('SystemExit')
+    @Override
+    void doWithApplicationContext() {
+        if (!grailsApplication.config.grails.passwordRecoveryURL) {
+            log.error 'PasswordResetLink not configured in the installing App.'
+
+            System.exit(1)
         }
     }
 }

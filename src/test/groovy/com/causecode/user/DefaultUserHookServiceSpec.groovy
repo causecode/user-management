@@ -20,13 +20,14 @@ class DefaultUserHookServiceSpec extends Specification {
         DefaultUserHookService defaultUserHookService = new DefaultUserHookService()
 
         when: 'preUserSignup method is called'
-        defaultUserHookService.preUserSignup()
+        def response = defaultUserHookService.preUserSignup()
 
-        then: 'InvalidActivityException must be thrown'
-        thrown(InvalidActivityException)
+        then: 'No exception is thrown and method returns null'
+        noExceptionThrown()
+        response == null
 
         when: 'onCreateUser method is called'
-        def response = defaultUserHookService.onCreateUser(null)
+        response = defaultUserHookService.onCreateUser(null)
 
         then: 'Method should return false'
         !response
