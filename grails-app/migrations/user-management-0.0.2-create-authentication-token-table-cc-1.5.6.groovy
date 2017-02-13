@@ -16,7 +16,7 @@ databaseChangeLog = {
             }
 
             column(name: 'email', type: 'VARCHAR(255)') {
-                constraints(nullable: 'false', unique: 'true', index: true)
+                constraints(nullable: 'false', index: true)
             }
 
             column(name: 'access_count', type: 'INT') {

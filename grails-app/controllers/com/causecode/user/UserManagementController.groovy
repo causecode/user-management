@@ -183,9 +183,9 @@ class UserManagementController extends RestfulController {
             if (!SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
                 message += 'Users with role Admin are excluded from selected list.'
             }
-
             respondData([success: false, message: message], [status: HttpStatus.NOT_ACCEPTABLE])
-            return
+
+            return false
         }
 
         try {
@@ -267,7 +267,7 @@ class UserManagementController extends RestfulController {
             respondData([message: 'Please select a user and enter new & confirmation email.'],
                     [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
-            return
+            return false
         }
 
         params.newEmail = params.newEmail.toLowerCase()
@@ -276,21 +276,21 @@ class UserManagementController extends RestfulController {
         if (params.newEmail != params.confirmNewEmail) {
             respondData([message: 'Email does not match the Confirm Email.'], [status: HttpStatus.PRECONDITION_FAILED])
 
-            return
+            return false
         }
 
         if (User.countByEmail(params.newEmail)) {
             respondData([message: "User already exists with Email: $params.newEmail"],
                     [status: HttpStatus.CONFLICT])
 
-            return
+            return false
         }
 
         User userInstance = User.get(params.id)
         if (!userInstance) {
             respondData([message: "User not found with id: $params.id."], [status: HttpStatus.NOT_FOUND])
 
-            return
+            return false
         }
 
         userInstance.email = params.newEmail
@@ -299,7 +299,7 @@ class UserManagementController extends RestfulController {
             respondData([message: "Unable to update user's email.", error: userInstance.errors],
                     [status: HttpStatus.NOT_ACCEPTABLE])
 
-            return
+            return false
         }
 
         respondData([message: 'Email updated Successfully.'])
