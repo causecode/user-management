@@ -8,6 +8,7 @@
 package com.causecode
 
 import com.causecode.user.DefaultUserHookService
+import grails.config.Config
 import grails.plugins.Plugin
 import com.causecode.spring.rest.CustomOauthUserDetailsService
 import com.causecode.util.CustomUserDetailsService
@@ -49,13 +50,18 @@ class UserManagementGrailsPlugin extends Plugin {
         }
     }
 
-    @SuppressWarnings('SystemExit')
     @Override
     void doWithApplicationContext() {
-        if (!grailsApplication.config.grails.passwordRecoveryURL) {
-            log.error 'PasswordResetLink not configured in the installing App.'
+        if (!grailsApplication.config.cc.plugins.user.management.passwordRecoveryURL) {
+            log.warn 'PasswordResetLink not configured in the installing App. Adding a default paswordRecoveryURL to' +
+                    'configuration'
 
-            System.exit(1)
+            Config configObject = grailsApplication.config
+            String defaultPasswordRecoveryURL = configObject.grails.serverURL + '/resetPassword'
+
+            configObject.merge(['cc.plugins.user.management.passwordRecoveryURL': defaultPasswordRecoveryURL])
+
+            log.info "Using ${defaultPasswordRecoveryURL} as password recovery URL."
         }
     }
 }

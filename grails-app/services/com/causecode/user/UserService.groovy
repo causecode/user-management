@@ -47,9 +47,9 @@ class UserService {
      * @return String URL
      */
     String getPasswordResetLink() {
-        ConfigObject configObject = grailsApplication.config.grails
+        ConfigObject configObject = grailsApplication.config
 
-        return configObject.passwordRecoveryURL
+        return configObject.cc.plugins.user.management.passwordRecoveryURL
     }
 
     /**

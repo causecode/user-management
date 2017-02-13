@@ -129,7 +129,7 @@ class UserServiceSpec extends Specification {
 
     void "test getPasswordResetLink method to return resetPasswordLink"() {
         given: 'Grails configurations'
-        grailsApplication.config.grails.passwordRecoveryURL = 'http://test.com'
+        grailsApplication.config.cc.plugins.user.management.passwordRecoveryURL = 'http://test.com'
 
         expect:
         service.passwordResetLink == 'http://test.com'

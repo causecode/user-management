@@ -8,7 +8,6 @@
 package com.causecode.user
 
 import spock.lang.Specification
-import javax.activity.InvalidActivityException
 
 /**
  * This class specifies unit test cases for {@link com.causecode.user.DefaultUserHookService}

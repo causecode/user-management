@@ -8,7 +8,6 @@
 package com.causecode.user
 
 import groovy.util.logging.Slf4j
-import javax.activity.InvalidActivityException
 
 /**
  * This class is the default implementation of UserHookService. This class is injected as userHookService bean.
