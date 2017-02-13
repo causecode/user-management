@@ -97,8 +97,7 @@ ccJacocoExt {
             '**/UserManagementGrailsPlugin*/**',
             '**/AuthenticationTokenCleanUpJob*/**',
             '**/UserDomainMarshaller*/**',
-            '**/UserManagementBootStrap*/**',
-            '**/SignUpNotAllowedException*/**'
+            '**/UserManagementBootStrap*/**'
     ]
 }
 

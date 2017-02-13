@@ -8,6 +8,7 @@
 package com.causecode.user
 
 import com.causecode.RestfulController
+import com.causecode.SignUpNotAllowedException
 import com.causecode.exceptions.InvalidParameterException
 import com.causecode.util.NucleusUtils
 import com.causecode.validators.PasswordValidator
@@ -62,7 +63,14 @@ class UserController extends RestfulController {
     def signUp() {
         Map requestData = request.JSON as Map
 
-        userHookService.preUserSignup()
+        try {
+            userHookService.preUserSignup()
+        } catch (SignUpNotAllowedException e) {
+            log.warn 'SignUpNotAllowedException', e
+            respondData([message: e.message], [status: HttpStatus.LOCKED])
+
+            return false
+        }
 
         if (!NucleusUtils.validateGoogleReCaptcha(requestData.myRecaptchaResponse)) {
             log.error('Captcha validation failed.')

@@ -7,6 +7,7 @@
  */
 package com.causecode.user
 
+import com.causecode.SignUpNotAllowedException
 import com.causecode.util.GenericEmailService
 import com.causecode.util.NucleusUtils
 import com.causecode.validators.PasswordValidatorSpec
@@ -722,5 +723,22 @@ class UserControllerSpec extends Specification {
         then: 'Server reponds with appropriate message and status code'
         response.json.message == 'User signup failed, Please contact administrator'
         response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
+    }
+
+    void "test signUp action when signUp is disabled in the installing application"() {
+        given: 'Mocked DefaultUserHookService methods'
+        controller.userHookService = Mock(DefaultUserHookService)
+        1 * controller.userHookService.preUserSignup() >> {
+            throw new SignUpNotAllowedException('Signup has been disabled')
+        }
+
+        when: 'signUp action is hit and error occures in onCreateUser hook'
+        controller.request.method = 'POST'
+        controller.request.json = [myRecaptchaResponse: 'testCaptchaResponse']
+        controller.signUp()
+
+        then: 'Server reponds with appropriate message and status code'
+        response.json.message == 'Signup has been disabled'
+        response.status == HttpStatus.LOCKED.value()
     }
 }
