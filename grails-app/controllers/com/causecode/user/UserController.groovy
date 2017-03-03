@@ -118,6 +118,7 @@ class UserController extends RestfulController {
             subject eventName
             text 'Account successfully created.'
             immediate true
+            beginDate new Date(System.currentTimeMillis() - 2000)
         }
 
         if (!sendEmail(emailTemplate, eventName)) {
@@ -178,6 +179,7 @@ class UserController extends RestfulController {
             subject eventName
             html bodyText
             immediate true
+            beginDate new Date(System.currentTimeMillis() - 2000)
         }
 
         String message = 'Password reset link sent successfully.'
