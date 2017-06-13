@@ -14,11 +14,11 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.causecode.plugins:gradle-code-quality:0.0.3"
+        classpath "com.causecode.plugins:gradle-code-quality:0.0.7"
     }
 }
 
-version "0.0.5"
+version "0.0.6"
 group "com.causecode.plugins"
 
 apply plugin:"idea"
