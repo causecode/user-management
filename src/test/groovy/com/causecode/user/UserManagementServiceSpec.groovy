@@ -57,34 +57,50 @@ class UserManagementServiceSpec extends Specification {
         userRole = Role.findOrSaveByAuthority('ROLE_USER')
     }
 
+    void mockExecuteQueryTotalCount(int totalCount) {
+        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams ->
+            return [totalCount]
+        }
+    }
+
+    void mockExecuteQueryGetUsers(List usersList) {
+        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map params1 ->
+            return usersList
+        }
+    }
+
     @DirtiesRuntime
     void "test listForMysql with params roleType anyGranted"() {
         given: 'parameter map'
         Map params = [ offset: 0, max: 15, roleFilter: [userRole.id.toString()], roleType: 'Any Granted']
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map params1 ->
-            return ['adminUser', 'normalUser']
-        }
+        mockExecuteQueryGetUsers([adminUser, normalUser])
+        mockExecuteQueryTotalCount(2)
 
         when: 'listForMySql method called'
         Map result = service.listForMysql(params)
 
         then: 'List of users will be returned'
-        assert !result.isEmpty()
+        !result.isEmpty()
+        result.instanceList[0] == adminUser
+        result.instanceList[1] == normalUser
+        result.totalCount == 2
     }
 
     @DirtiesRuntime
     void "test listForMysql with params roleType allGranted"() {
         given: 'parameter map'
         Map params = [ offset: 0, max: 15, roleFilter: [userRole.id.toString()], roleType: 'All Granted']
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map params1 ->
-            return ['adminUser', 'normalUser']
-        }
+        mockExecuteQueryGetUsers([adminUser, normalUser])
+        mockExecuteQueryTotalCount(2)
 
         when: 'listForMySql method called'
         Map result = service.listForMysql(params)
 
         then: 'List of users will be returned'
-        assert !result.isEmpty()
+        !result.isEmpty()
+        result.instanceList[0] == adminUser
+        result.instanceList[1] == normalUser
+        result.totalCount == 2
     }
 
     @DirtiesRuntime
@@ -252,9 +268,8 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(managerUser, userRole, true)
         assert UserRole.create(adminUser, adminRole, true)
 
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map args ->
-            return [adminUser]
-        }
+        mockExecuteQueryGetUsers([adminUser])
+        mockExecuteQueryTotalCount(1)
 
         when: 'getList method called with letter in params'
         Map result = service.getList(params)
@@ -281,9 +296,8 @@ class UserManagementServiceSpec extends Specification {
         String selectedIds = adminUser.id + ',' + normalUser.id + ',' + managerUser.id
         Map args = [offset: 0, max: 15, roleFilter: [userRole.id.toString()], roleType: '']
 
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map params1 ->
-            return ['adminUser', 'normalUser', 'managerUser']
-        }
+        mockExecuteQueryGetUsers([adminUser, normalUser, managerUser])
+        mockExecuteQueryTotalCount(3)
 
         when: 'getAppropriatedList method called'
         List result = service.getSelectedItemList(true, selectedIds, args)

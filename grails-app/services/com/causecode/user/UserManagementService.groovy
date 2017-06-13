@@ -166,7 +166,9 @@ class UserManagementService {
         userInstanceList = UserRole.executeQuery(query.toString(),
                 queryStringParams, [max: params.max, offset: params.offset])
 
-        userInstanceTotal = userInstanceList.size()
+        String countQuery = query.replaceAll('distinct ur1.user', 'count (distinct ur1.user)')
+
+        userInstanceTotal = UserRole.executeQuery(countQuery.toString(), queryStringParams)[0]
 
         [instanceList: userInstanceList, totalCount: userInstanceTotal]
     }
