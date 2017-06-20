@@ -37,7 +37,7 @@ class UserManagementService {
             roleFilterList = params.roleFilter as List
         }
 
-        List userList = UserRole.createCriteria().list(params) {
+        List userList = UserRole.createCriteria().list() {
             if (params.roleFilter) {
                 switch (params.roleType) {
                     case 'Any Granted':
@@ -53,6 +53,10 @@ class UserManagementService {
                     default:
                         eq('role', getAppropiateIdList(roleFilterList).sort())
                 }
+            }
+
+            projections {
+                property('user')
             }
         }
 

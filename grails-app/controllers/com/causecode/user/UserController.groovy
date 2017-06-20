@@ -29,7 +29,7 @@ import org.springframework.http.HttpStatus
  * @author Nikhil Sharma
  * @since 0.0.1
  */
-@Secured(['permitAll'])
+@Secured(['ROLE_ADMIN'])
 class UserController extends RestfulController {
 
     static namespace = 'v1'
@@ -59,6 +59,7 @@ class UserController extends RestfulController {
         return true
     }
 
+    @Secured(['permitAll'])
     @Transactional
     def signUp() {
         Map requestData = request.JSON as Map
@@ -132,6 +133,7 @@ class UserController extends RestfulController {
         respondData(user: userInstance, access_token: accessTokenInstance.accessToken)
     }
 
+    @Secured(['permitAll'])
     def forgotPassword() {
         Map requestData = request.JSON as Map
         String email = requestData.email
@@ -197,6 +199,7 @@ class UserController extends RestfulController {
      * @params String token
      * @return true for valid token and UNAUTHORIZED status for invalid token.
      */
+    @Secured(['permitAll'])
     def validatePasswordResetToken() {
         String token = params.token
         String email = params.email
@@ -211,6 +214,7 @@ class UserController extends RestfulController {
                 [status: HttpStatus.UNAUTHORIZED])
     }
 
+    @Secured(['permitAll'])
     def resetPassword() {
         Map requestData = request.JSON as Map
 
@@ -298,5 +302,63 @@ class UserController extends RestfulController {
         }
 
         respondData([message: 'Successfully updated user details'])
+    }
+
+    /**
+     * End point to save user.
+     * @params: roleIds - should contain the Ids of the Role that needs to be assigned to the user
+     *          dbType - Required (Either 'Mongo' or 'Mysql'
+     *          Other params to create User such as email, password, username, firstName, lastName etc.
+     * @return User userInstance
+     */
+    @Override
+    save() {
+        params.putAll(request.JSON as Map)
+        String dbType = params.dbType
+
+        if (!params.roleIds) {
+            respondData([message: 'Please provide roleIds in params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
+
+        if (!(dbType in ['Mysql', 'Mongo'])) {
+            respondData([message: 'Please provide a valid dbType param'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
+
+        List<Role> roleList = Role.withCriteria {
+            if (dbType == 'Mysql') {
+                'in' ('id', params.roleIds)
+            } else {
+                'in' ('_id', params.roleIds)
+            }
+
+            maxResults(50)
+        }
+
+        if (!roleList) {
+            respondData([message: "Could not find any role with ids ${params.roleIds}"],
+                    [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
+
+        User userInstance = new User()
+
+        bindData(userInstance, params)
+
+        if (NucleusUtils.save(userInstance, true)) {
+            roleList.each { Role roleInstance ->
+                UserRole.create(userInstance, roleInstance, true)
+            }
+        } else {
+            respondData([message: "Could not save user instance."], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
+
+        respondData(user: userInstance)
     }
 }
