@@ -69,6 +69,9 @@ class UserManagementController extends RestfulController {
         log.info "Params received to fetch users :$params"
 
         Map result = userManagementService."listFor${tempDbType}"(params)
+        if (offset == 0) {
+            result['roleList'] = Role.list(max: 50)
+        }
 
         render result as JSON
     }
@@ -301,17 +304,5 @@ class UserManagementController extends RestfulController {
         }
 
         respondData([message: 'Email updated Successfully.'])
-    }
-
-    /**
-     * End point to fetch all the Roles from the database.
-     * @return List of Roles.
-     */
-    def fetchRoles() {
-        List roleList = Role.withCriteria {
-            maxResults(50)
-        }
-
-        respondData(roles: roleList)
     }
 }

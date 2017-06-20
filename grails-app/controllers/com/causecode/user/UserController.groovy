@@ -354,11 +354,24 @@ class UserController extends RestfulController {
                 UserRole.create(userInstance, roleInstance, true)
             }
         } else {
-            respondData([message: "Could not save user instance."], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+            respondData([message: 'Could not save user instance.'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }
 
         respondData(user: userInstance)
+    }
+
+    /**
+     * End point to fetch all the Roles from the database.
+     * @return List of Roles.
+     */
+    @Secured(['ROLE_USER_MANAGER'])
+    def fetchRoles() {
+        List roleList = Role.withCriteria {
+            maxResults(50)
+        }
+
+        respondData(roles: roleList)
     }
 }

@@ -741,4 +741,69 @@ class UserControllerSpec extends Specification {
         response.json.message == 'Signup has been disabled'
         response.status == HttpStatus.LOCKED.value()
     }
+
+    @Unroll
+    void "test save endpoint when invalid data is passed in request"() {
+        given: 'A few instance of Role'
+        new Role(authority: 'ROLE_USER').save(flush: true)
+        new Role(authority: 'ROLE_ADMIN').save(flush: true)
+        new Role(authority: 'ROLE_MANAGER').save(flush: true)
+
+        when: 'save endpoint is hit and invalid params are passed'
+        controller.request.method = 'POST'
+        controller.params.roleIds = roleIds
+        controller.params.dbType = dbType
+        controller.params.email = null
+        controller.save()
+
+        then: 'Server responds with valid error message and code'
+        controller.response.status == HttpStatus.UNPROCESSABLE_ENTITY.value()
+        controller.response.json.message == responseMessage
+
+        where:
+        roleIds         | dbType  | responseMessage
+        []              | ''      | 'Please provide roleIds in params'
+        [10234, 984357] | ''      | 'Please provide a valid dbType param'
+        [10234, 984357] | 'mongo' | 'Please provide a valid dbType param'
+        [10234, 984357] | 'Mysql' | 'Could not find any role with ids [10234, 984357]'
+        [1]             | 'Mysql' | 'Could not save user instance.'
+    }
+
+    void "test save endpoint when valid data is passed to create User"() {
+        given: 'A few instance of Role'
+        Role roleInstance = new Role(authority: 'ROLE_DUMMY_USER').save(flush: true)
+        Role roleInstance1 = new Role(authority: 'ROLE_DUMMY_ADMIN').save(flush: true)
+        Role roleInstance2 = new Role(authority: 'ROLE_DUMMY_MANAGER').save(flush: true)
+
+        when: 'save endpoint is hit and invalid params are passed'
+        controller.request.method = 'POST'
+        controller.params.roleIds = [roleInstance.id, roleInstance1.id, roleInstance2.id]
+        controller.params.dbType = 'Mysql'
+        controller.params.email = 'testuser@causecode.com'
+        controller.params.username = 'test user'
+        controller.params.password = 'causecode.11'
+        controller.save()
+
+        then: 'Server responds with valid User instance'
+        controller.response.status == HttpStatus.OK.value()
+        User userInstance = User.get(controller.response.json.user.id)
+        userInstance.id != null
+        userInstance.email == 'testuser@causecode.com'
+        UserRole.findAllByUser(userInstance).size() == 3
+    }
+
+    void "test fetchRoles action to get List of Roles"() {
+        given: 'A few instance of Roles'
+        new Role(authority: 'ROLE_USER').save(flush: true)
+        new Role(authority: 'ROLE_ADMIN').save(flush: true)
+        new Role(authority: 'ROLE_MANAGER').save(flush: true)
+        new Role(authority: 'ROLE_USER_MANAGER').save(flush: true)
+
+        when: 'fetchRoles endpoint is hit'
+        controller.request.method = 'GET'
+        controller.fetchRoles()
+
+        then: 'Roles are responded in response'
+        controller.response.json.roles.size() != null
+    }
 }

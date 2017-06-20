@@ -37,7 +37,7 @@ class UserManagementService {
             roleFilterList = params.roleFilter as List
         }
 
-        List userList = UserRole.createCriteria().list() {
+        List userList = UserRole.createCriteria().list {
             if (params.roleFilter) {
                 switch (params.roleType) {
                     case 'Any Granted':
