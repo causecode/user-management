@@ -307,13 +307,15 @@ class UserController extends RestfulController {
     /**
      * End point to save user.
      * @params: roleIds - should contain the Ids of the Role that needs to be assigned to the user
-     *          dbType - Required (Either 'Mongo' or 'Mysql'
-     *          Other params to create User such as email, password, username, firstName, lastName etc.
+     *          dbType - Required - Either 'Mongo' or 'Mysql'
+     *          Other params to create User instance such as email, password, username, firstName, lastName etc.
      * @return User userInstance
      */
     @Override
-    save() {
+    def save() {
         params.putAll(request.JSON as Map)
+
+        log.debug "params recieved to save User - ${params}"
         String dbType = params.dbType
 
         if (!params.roleIds) {
@@ -323,7 +325,7 @@ class UserController extends RestfulController {
         }
 
         if (!(dbType in ['Mysql', 'Mongo'])) {
-            respondData([message: 'Please provide a valid dbType param'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+            respondData([message: 'Please provide a valid dbType params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }
@@ -368,7 +370,7 @@ class UserController extends RestfulController {
      */
     @Secured(['ROLE_USER_MANAGER'])
     def fetchRoles() {
-        List roleList = Role.withCriteria {
+        List<Role> roleList = Role.withCriteria {
             maxResults(50)
         }
 

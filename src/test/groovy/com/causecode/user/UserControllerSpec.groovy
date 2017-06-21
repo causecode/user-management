@@ -763,8 +763,8 @@ class UserControllerSpec extends Specification {
         where:
         roleIds         | dbType  | responseMessage
         []              | ''      | 'Please provide roleIds in params'
-        [10234, 984357] | ''      | 'Please provide a valid dbType param'
-        [10234, 984357] | 'mongo' | 'Please provide a valid dbType param'
+        [10234, 984357] | ''      | 'Please provide a valid dbType params'
+        [10234, 984357] | 'mongo' | 'Please provide a valid dbType params'
         [10234, 984357] | 'Mysql' | 'Could not find any role with ids [10234, 984357]'
         [1]             | 'Mysql' | 'Could not save user instance.'
     }
@@ -775,7 +775,7 @@ class UserControllerSpec extends Specification {
         Role roleInstance1 = new Role(authority: 'ROLE_DUMMY_ADMIN').save(flush: true)
         Role roleInstance2 = new Role(authority: 'ROLE_DUMMY_MANAGER').save(flush: true)
 
-        when: 'save endpoint is hit and invalid params are passed'
+        when: 'save endpoint is hit and valid params are passed'
         controller.request.method = 'POST'
         controller.params.roleIds = [roleInstance.id, roleInstance1.id, roleInstance2.id]
         controller.params.dbType = 'Mysql'
@@ -794,8 +794,6 @@ class UserControllerSpec extends Specification {
 
     void "test fetchRoles action to get List of Roles"() {
         given: 'A few instance of Roles'
-        new Role(authority: 'ROLE_USER').save(flush: true)
-        new Role(authority: 'ROLE_ADMIN').save(flush: true)
         new Role(authority: 'ROLE_MANAGER').save(flush: true)
         new Role(authority: 'ROLE_USER_MANAGER').save(flush: true)
 
@@ -804,6 +802,6 @@ class UserControllerSpec extends Specification {
         controller.fetchRoles()
 
         then: 'Roles are responded in response'
-        controller.response.json.roles.size() != null
+        controller.response.json.roles.size() == 4 // 2 were created in setup block.
     }
 }
