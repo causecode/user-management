@@ -284,7 +284,7 @@ class UserController extends RestfulController {
      * @params userInstance
      * @return objectInstance
      */
-    @Secured(['ROLE_USER'])
+    @Secured(['ROLE_ADMIN'])
     def update() {
         params.putAll(request.JSON as Map)
         User userInstance = User.get(params.id)
