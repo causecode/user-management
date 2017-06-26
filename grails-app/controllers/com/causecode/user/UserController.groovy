@@ -315,7 +315,7 @@ class UserController extends RestfulController {
     def save() {
         params.putAll(request.JSON as Map)
 
-        log.debug "params recieved to save User - ${params}"
+        log.debug "params recieved to save User - ${params.findAll {it.key != 'password'}}"
         String dbType = params.dbType
 
         if (!params.roleIds) {
