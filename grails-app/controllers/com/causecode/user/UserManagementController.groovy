@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus
 @Secured(['ROLE_USER_MANAGER'])
 class UserManagementController extends RestfulController {
 
+    static namespace = 'v1'
     UserManagementController() {
         super(User)
     }

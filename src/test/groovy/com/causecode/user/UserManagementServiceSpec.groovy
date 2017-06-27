@@ -110,7 +110,7 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(normalUser, userRole, true)
 
         UserRole.metaClass.'static'.createCriteria = {
-            return ['list': { Map map, Closure closure ->
+            return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser]
@@ -154,7 +154,7 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(normalUser, userRole, true)
 
         UserRole.metaClass.'static'.createCriteria = {
-            return ['list': { Map map, Closure closure ->
+            return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser, normalUser]
@@ -189,7 +189,7 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(normalUser, adminRole, true)
 
         UserRole.metaClass.'static'.createCriteria = {
-            return ['list': { Map map, Closure closure ->
+            return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser, normalUser]
