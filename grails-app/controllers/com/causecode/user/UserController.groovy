@@ -9,6 +9,7 @@ package com.causecode.user
 
 import com.causecode.RestfulController
 import com.causecode.SignUpNotAllowedException
+import com.causecode.exceptions.DBTypeNotFoundException
 import com.causecode.exceptions.InvalidParameterException
 import com.causecode.util.NucleusUtils
 import com.causecode.validators.PasswordValidator
@@ -316,16 +317,19 @@ class UserController extends RestfulController {
         params.putAll(request.JSON as Map)
 
         log.debug "params recieved to save User - ${params.findAll {it.key != 'password'}}"
-        String dbType = params.dbType
-
-        if (!params.roleIds) {
-            respondData([message: 'Please provide roleIds in params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+        String dbType
+        try{
+            dbType=NucleusUtils.getDBType()
+        }
+        catch (DBTypeNotFoundException ex){
+            respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }
 
-        if (!(dbType in ['Mysql', 'Mongo'])) {
-            respondData([message: 'Please provide a valid dbType params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+        if (!params.roleIds) {
+            respondData([message: 'Please provide roleIds in params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }

@@ -14,8 +14,10 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.test.runtime.DirtiesRuntime
+import grails.util.Holders
 import org.springframework.http.HttpStatus
 import spock.lang.Specification
+import sun.security.provider.certpath.Builder
 
 import java.sql.SQLException
 
@@ -103,6 +105,10 @@ class UserManagementControllerSpec extends Specification {
         controller.userManagementService = [listForMysql: { Map params ->
             return [instanceList: userInstanceList, totalCount: userInstanceList.size()]
         } ] as UserManagementService
+        Holders.config.dataSource.driverClassName='com.mysql.jdbc.driver'
+        Holders.config.dataSource.url='jdbc:mysql://localhost:3306/test'
+        Holders.config.grails.mongodb.databaseName=null
+        Holders.config.grails.mongodb.host=null
 
         when: 'index action is hit'
         controller.index()
@@ -116,13 +122,26 @@ class UserManagementControllerSpec extends Specification {
         when: 'index action is hit'
         controller.params.max = 100
         controller.params.offset = 10
-        controller.params.dbType = 'Mysql'
         controller.index()
 
         then: 'provided values will be set in params'
         controller.params.offset == 10
         controller.params.max == 100
         controller.response.json.totalCount == 2
+    }
+    void "test index action when no database is inferred from application config"(){
+        given:
+        Holders.config.dataSource.driverClassName=''
+        Holders.config.dataSource.url=''
+        Holders.config.grails.mongodb.databaseName=null
+        Holders.config.grails.mongodb.host=null
+
+        when:
+        controller.params.max = 100
+        controller.params.offset = 10
+        controller.index()
+        then:
+        response.json['message']=='Could not infer dbType from application config.'
     }
 
     void "test Index action with date filter applied"() {
@@ -131,11 +150,14 @@ class UserManagementControllerSpec extends Specification {
         controller.userManagementService = [listForMysql: { Map params ->
             return [instanceList: userInstanceList, totalCount: userInstanceList.size()]
         } ] as UserManagementService
+        Holders.config.dataSource.driverClassName='com.mysql.jdbc.driver'
+        Holders.config.dataSource.url='jdbc:mysql://localhost:3306/test'
+        Holders.config.grails.mongodb.databaseName=null
+        Holders.config.grails.mongodb.host=null
 
         when: 'Index action is hit'
         controller.params.max = 15
         controller.params.offset = 0
-        controller.params.dbType = 'Mysql'
         controller.index()
 
         then: 'List of users will be returned'

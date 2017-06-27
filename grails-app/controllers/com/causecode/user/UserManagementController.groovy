@@ -8,6 +8,7 @@
 package com.causecode.user
 
 import com.causecode.RestfulController
+import com.causecode.exceptions.DBTypeNotFoundException
 import com.causecode.util.NucleusUtils
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -59,7 +60,16 @@ class UserManagementController extends RestfulController {
      * @return Result in JSON format.
      */
     def index(Integer max, int offset, String dbType) {
-        String tempDbType = dbType
+        String tempDbType
+        try{
+            tempDbType=NucleusUtils.getDBType()
+            log.info "database name received from NucleusUtils : $tempDbType"
+        }
+        catch (DBTypeNotFoundException ex){
+            respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
         params.offset = offset ?: 0
         params.max = Math.min(max ?: 10, 100)
         params.sort = params.sort ?: 'dateCreated'
