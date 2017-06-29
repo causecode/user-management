@@ -59,13 +59,13 @@ class UserManagementController extends RestfulController {
      * @param dbType Type of database support. Must be either "Mongo" or "Mysql".
      * @return Result in JSON format.
      */
-    def index(Integer max, int offset, String dbType) {
-        String tempDbType
-        try{
-            tempDbType=NucleusUtils.getDBType()
-            log.info "database name received from NucleusUtils : $tempDbType"
+    def index(Integer max, int offset) {
+        String dbType
+        try {
+            dbType = NucleusUtils.DBType
+            log.debug "Inferred database type - ${dbType}."
         }
-        catch (DBTypeNotFoundException ex){
+        catch (DBTypeNotFoundException ex) {
             respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
@@ -74,11 +74,11 @@ class UserManagementController extends RestfulController {
         params.max = Math.min(max ?: 10, 100)
         params.sort = params.sort ?: 'dateCreated'
         params.order = params.order ?: 'desc'
-        tempDbType = tempDbType ?: 'Mysql'
+        dbType = dbType ?: 'Mysql'
 
         log.info "Params received to fetch users :$params"
 
-        Map result = userManagementService."listFor${tempDbType}"(params)
+        Map result = userManagementService."listFor${dbType}"(params)
         if (offset == 0) {
             result['roleList'] = Role.list(max: 50)
         }

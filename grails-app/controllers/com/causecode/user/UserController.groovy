@@ -308,7 +308,6 @@ class UserController extends RestfulController {
     /**
      * End point to save user.
      * @params: roleIds - should contain the Ids of the Role that needs to be assigned to the user
-     *          dbType - Required - Either 'Mongo' or 'Mysql'
      *          Other params to create User instance such as email, password, username, firstName, lastName etc.
      * @return User userInstance
      */
@@ -316,17 +315,17 @@ class UserController extends RestfulController {
     def save() {
         params.putAll(request.JSON as Map)
 
-        log.debug "params recieved to save User - ${params.findAll {it.key != 'password'}}"
+        log.debug 'params recieved to save User - ' + params.findAll { it.key != 'password' }
         String dbType
-        try{
-            dbType=NucleusUtils.getDBType()
+        try {
+            dbType = NucleusUtils.DBType
+            log.debug "Inferred database type - ${dbType}."
         }
-        catch (DBTypeNotFoundException ex){
+        catch (DBTypeNotFoundException ex) {
             respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }
-
 
         if (!params.roleIds) {
             respondData([message: 'Please provide roleIds in params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])

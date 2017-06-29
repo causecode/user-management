@@ -751,10 +751,10 @@ class UserControllerSpec extends Specification {
         new Role(authority: 'ROLE_MANAGER').save(flush: true)
 
         when: 'save endpoint is hit and invalid params are passed'
-        Holders.config.dataSource.driverClassName=mysqlDriver
-        Holders.config.dataSource.url=mysqlUrl
-        Holders.config.grails.mongodb.databaseName=mongoDBName
-        Holders.config.grails.mongodb.host=mongoHost
+        Holders.config.dataSource.driverClassName = mysqlDriver
+        Holders.config.dataSource.url = mysqlUrl
+        Holders.config.grails.mongodb.databaseName = mongoDBName
+        Holders.config.grails.mongodb.host = mongoHost
 
         controller.request.method = 'POST'
         controller.params.roleIds = roleIds
@@ -767,22 +767,25 @@ class UserControllerSpec extends Specification {
 
         where:
         roleIds          | mysqlDriver   |  mysqlUrl     | mongoDBName     | mongoHost    | responseMessage
-        []               | 'com.mysql.'  | 'jdbc:mysql:' | null            | null         | 'Please provide roleIds in params'
-        [10234, 984357]  | ''            | ''            | null            | null         | 'Could not infer dbType from application config.'
-        [10234, 984357]  | 'com.mysql.'  | 'jdbc:mysql:' | null            | null         | 'Could not find any role with ids [10234, 984357]'
-        [1]              | 'com.mysql.'  | 'jdbc:mysql:' | null            | null         | 'Could not save user instance.'
+        []               | 'com.mysql.'  | 'jdbc:mysql:' | null            | null         |
+                'Please provide roleIds in params'
+        [10234, 984357]  | ''            | ''            | null            | null         |
+                'Could not infer dbType from application config.'
+        [10234, 984357]  | 'com.mysql.'  | 'jdbc:mysql:' | null            | null         |
+                'Could not find any role with ids [10234, 984357]'
+        [1]              | 'com.mysql.'  | 'jdbc:mysql:' | null            | null         |
+                'Could not save user instance.'
+        [10234, 984357]  | 'com.mysql'   | 'jdbc:mysql:' | 'test_mongo'    | 'localhost'  |
+                'Could not infer dbType from application config.'
     }
-
 
     void "test save endpoint when valid data is passed to create User"() {
         given: 'A few instance of Role'
         Role roleInstance = new Role(authority: 'ROLE_DUMMY_USER').save(flush: true)
         Role roleInstance1 = new Role(authority: 'ROLE_DUMMY_ADMIN').save(flush: true)
         Role roleInstance2 = new Role(authority: 'ROLE_DUMMY_MANAGER').save(flush: true)
-        Holders.config.dataSource.driverClassName='com.mysql.jdbc.driver'
-        Holders.config.dataSource.url='jdbc:mysql://localhost:3306/test'
-        Holders.config.grails.mongodb.databaseName=null
-        Holders.config.grails.mongodb.host=null
+        Holders.config.dataSource.driverClassName = 'com.mysql.jdbc.driver'
+        Holders.config.dataSource.url = 'jdbc:mysql://localhost:3306/test'
 
         when: 'save endpoint is hit and valid params are passed'
         controller.request.method = 'POST'
