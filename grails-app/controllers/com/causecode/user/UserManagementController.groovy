@@ -56,7 +56,6 @@ class UserManagementController extends RestfulController {
     /**
      * List action used to fetch Role list and User's list with filters and pagination applied.
      * @param max Integer parameter used to set number of records to be returned.
-     * @param dbType Type of database support. Must be either "Mongo" or "Mysql".
      * @return Result in JSON format.
      */
     def index(Integer max, int offset) {
