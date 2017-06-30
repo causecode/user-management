@@ -66,6 +66,7 @@ dependencies {
     // CauseCode Dependencies
     compile "com.causecode.plugins:nucleus:0.4.10"
     compile "com.causecode.plugins:rest-security-core:0.0.1"
+    compile "com.causecode.plugins:mongo-update-embedded:0.0.6"
     // Grails JSON Views
     provided "org.grails.plugins:views-json:1.1.3"
     provided "org.grails.plugins:views-json-templates:1.1.3"
