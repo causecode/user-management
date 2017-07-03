@@ -9,6 +9,8 @@ package com.causecode.user
 
 import com.causecode.RestfulController
 import com.causecode.exceptions.DBTypeNotFoundException
+import com.causecode.exceptions.MissingConfigException
+import com.causecode.util.DBTypes
 import com.causecode.util.NucleusUtils
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -60,20 +62,20 @@ class UserManagementController extends RestfulController {
      */
     def index(Integer max, int offset) {
         String dbType
+
         try {
-            dbType = NucleusUtils.DBType
+            dbType = NucleusUtils.DBType == DBTypes.MYSQL ? 'Mysql' : 'Mongo'
             log.debug "Inferred database type - ${dbType}."
-        }
-        catch (DBTypeNotFoundException ex) {
+        } catch (DBTypeNotFoundException | MissingConfigException ex) {
             respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
 
             return false
         }
+
         params.offset = offset ?: 0
         params.max = Math.min(max ?: 10, 100)
         params.sort = params.sort ?: 'dateCreated'
         params.order = params.order ?: 'desc'
-        dbType = dbType ?: 'Mysql'
 
         log.info "Params received to fetch users :$params"
 
