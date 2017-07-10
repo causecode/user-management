@@ -8,6 +8,9 @@
 package com.causecode.user
 
 import com.causecode.RestfulController
+import com.causecode.exceptions.DBTypeNotFoundException
+import com.causecode.exceptions.MissingConfigException
+import com.causecode.util.DBTypes
 import com.causecode.util.NucleusUtils
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -55,20 +58,28 @@ class UserManagementController extends RestfulController {
     /**
      * List action used to fetch Role list and User's list with filters and pagination applied.
      * @param max Integer parameter used to set number of records to be returned.
-     * @param dbType Type of database support. Must be either "Mongo" or "Mysql".
      * @return Result in JSON format.
      */
-    def index(Integer max, int offset, String dbType) {
-        String tempDbType = dbType
+    def index(Integer max, int offset) {
+        String dbType
+
+        try {
+            dbType = NucleusUtils.DBType == DBTypes.MYSQL ? 'Mysql' : 'Mongo'
+            log.debug "Inferred database type - ${dbType}."
+        } catch (DBTypeNotFoundException | MissingConfigException ex) {
+            respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
+
         params.offset = offset ?: 0
         params.max = Math.min(max ?: 10, 100)
         params.sort = params.sort ?: 'dateCreated'
         params.order = params.order ?: 'desc'
-        tempDbType = tempDbType ?: 'Mysql'
 
         log.info "Params received to fetch users :$params"
 
-        Map result = userManagementService."listFor${tempDbType}"(params)
+        Map result = userManagementService."listFor${dbType}"(params)
         if (offset == 0) {
             result['roleList'] = Role.list(max: 50)
         }
