@@ -9,7 +9,10 @@ package com.causecode.user
 
 import com.causecode.RestfulController
 import com.causecode.SignUpNotAllowedException
+import com.causecode.exceptions.DBTypeNotFoundException
 import com.causecode.exceptions.InvalidParameterException
+import com.causecode.exceptions.MissingConfigException
+import com.causecode.util.DBTypes
 import com.causecode.util.NucleusUtils
 import com.causecode.validators.PasswordValidator
 import grails.core.GrailsApplication
@@ -307,7 +310,6 @@ class UserController extends RestfulController {
     /**
      * End point to save user.
      * @params: roleIds - should contain the Ids of the Role that needs to be assigned to the user
-     *          dbType - Required - Either 'Mongo' or 'Mysql'
      *          Other params to create User instance such as email, password, username, firstName, lastName etc.
      * @return User userInstance
      */
@@ -315,8 +317,17 @@ class UserController extends RestfulController {
     def save() {
         params.putAll(request.JSON as Map)
 
-        log.debug "params recieved to save User - ${params.findAll {it.key != 'password'}}"
-        String dbType = params.dbType
+        log.debug 'params recieved to save User - ' + params.findAll { it.key != 'password' }
+        DBTypes dbType
+
+        try {
+            dbType = NucleusUtils.DBType
+            log.debug "Inferred database type - ${dbType}."
+        } catch (DBTypeNotFoundException | MissingConfigException ex) {
+            respondData([message: ex.message], [status: HttpStatus.UNPROCESSABLE_ENTITY])
+
+            return false
+        }
 
         if (!params.roleIds) {
             respondData([message: 'Please provide roleIds in params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
@@ -324,16 +335,10 @@ class UserController extends RestfulController {
             return false
         }
 
-        if (!(dbType in ['Mysql', 'Mongo'])) {
-            respondData([message: 'Please provide a valid dbType params'], [status: HttpStatus.UNPROCESSABLE_ENTITY])
-
-            return false
-        }
-
         List<Role> roleList = Role.withCriteria {
-            if (dbType == 'Mysql') {
+            if (dbType == DBTypes.MYSQL) {
                 'in' ('id', params.roleIds)
-            } else {
+            } else if (dbType == DBTypes.MONGO) {
                 'in' ('_id', params.roleIds)
             }
 

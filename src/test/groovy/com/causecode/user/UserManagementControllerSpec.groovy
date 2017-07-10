@@ -14,6 +14,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.test.runtime.DirtiesRuntime
+import grails.util.Holders
 import org.springframework.http.HttpStatus
 import spock.lang.Specification
 
@@ -24,6 +25,7 @@ import java.sql.SQLException
  */
 @TestFor(UserManagementController)
 @Mock([User, Role, UserRole, ExportService])
+@SuppressWarnings(['MethodCount']) // added to suppress the codenarc voilation of exceeding 30 methods in a class.
 class UserManagementControllerSpec extends Specification {
 
     User adminUser, managerUser, normalUser, trialUser
@@ -103,6 +105,8 @@ class UserManagementControllerSpec extends Specification {
         controller.userManagementService = [listForMysql: { Map params ->
             return [instanceList: userInstanceList, totalCount: userInstanceList.size()]
         } ] as UserManagementService
+        Holders.config.dataSource.driverClassName = 'com.mysql'
+        Holders.config.dataSource.url = 'jdbc:mysql:'
 
         when: 'index action is hit'
         controller.index()
@@ -116,7 +120,6 @@ class UserManagementControllerSpec extends Specification {
         when: 'index action is hit'
         controller.params.max = 100
         controller.params.offset = 10
-        controller.params.dbType = 'Mysql'
         controller.index()
 
         then: 'provided values will be set in params'
@@ -133,9 +136,10 @@ class UserManagementControllerSpec extends Specification {
         } ] as UserManagementService
 
         when: 'Index action is hit'
+        Holders.config.dataSource.driverClassName = 'com.mysql.jdbc.driver'
+        Holders.config.dataSource.url = 'jdbc:mysql://localhost:3306/test'
         controller.params.max = 15
         controller.params.offset = 0
-        controller.params.dbType = 'Mysql'
         controller.index()
 
         then: 'List of users will be returned'
@@ -144,6 +148,20 @@ class UserManagementControllerSpec extends Specification {
         response.json['totalCount'] != null
         response.json.totalCount == 1
         response.json['roleList'] != null
+    }
+
+    void "test index action when no database is inferred from application config"() {
+        given: 'mock config properties'
+        Holders.config.dataSource.driverClassName = ''
+        Holders.config.dataSource.url = ''
+
+        when: 'index method is hit with invalid config params'
+        controller.params.max = 100
+        controller.params.offset = 10
+        controller.index()
+
+        then: 'valid error message must be received in response'
+        response.json['message'] == 'Could not infer dbType from application config.'
     }
 
     @DirtiesRuntime
