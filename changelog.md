@@ -8,7 +8,7 @@ present in the installing app. (For ex - spring security core and spring securit
 
 ### Removed
 1. `org.grails.plugins:export` dependency which was added by nucleus plugin has been removed.
-(It should have been present in user-management plugin itselt.)
+(It should have been present in user-management plugin itself.)
 2. The export endpoint to export user data in csv format present in UserManagementController has been removed.
 The export plugin was too bulky. It was adding 10 mb to the app's war size.
 3. Google re-captcha server side validation from signup endpoint in UserController. It will be added back after
