@@ -75,9 +75,6 @@ dependencies {
 
     // In memory H2 Database.
     runtime "com.h2database:h2"
-
-    // Needed for CSV export endpoints.
-    compile "org.grails.plugins:export:2.0.0"
 }
 
 ccJacocoExt {
