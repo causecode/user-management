@@ -1,6 +1,6 @@
 # ChangeLog
 
-## version 0.0.9
+## [0.0.9] - 12-10-2017
 
 ### Fixed
 1. Dependencies - changed compile dependencies to provided dependency for common dependencies which will be
