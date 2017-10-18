@@ -9,7 +9,6 @@ package com.causecode.user
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityService
-import grails.plugins.export.ExportService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -24,7 +23,7 @@ import java.sql.SQLException
  * This class specifies unit test cases for {@link com.causecode.user.UserManagementController}
  */
 @TestFor(UserManagementController)
-@Mock([User, Role, UserRole, ExportService])
+@Mock([User, Role, UserRole])
 @SuppressWarnings(['MethodCount']) // added to suppress the codenarc voilation of exceeding 30 methods in a class.
 class UserManagementControllerSpec extends Specification {
 
@@ -641,27 +640,6 @@ class UserManagementControllerSpec extends Specification {
         trialUser.refresh().accountLocked == false
         normalUser.refresh().accountLocked == false
         controller.response.json.success == true
-    }
-
-    void "test export action"() {
-        given: 'User details for export'
-        controller.userManagementService = [getSelectedItemList: { boolean selectAll, String selectedIds, Map args ->
-            return selectAll ? [adminUser, normalUser, managerUser, trialUser] : [adminUser, normalUser]
-        } ] as UserManagementService
-
-        controller.exportService = [export: { String type, OutputStream outputStream, List objects, List fields,
-                Map labels, Map formatters, Map parameters ->
-            return
-        } ] as ExportService
-
-        when: 'Action is hit'
-        // boolean value indicates whether all users should be selected or not
-        // if no argument is given then default false is considered
-        // true - all users should be selected, false - only selected users should be selected
-        controller.export()
-
-        then: 'OK response is generated'
-        controller.response.status == 200
     }
 
     void "test updateEmail action for invalid or missing data"() {

@@ -15,7 +15,6 @@ import com.causecode.util.NucleusUtils
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
-import grails.plugins.export.ExportService
 import org.springframework.http.HttpStatus
 
 /**
@@ -31,7 +30,6 @@ class UserManagementController extends RestfulController {
         super(User)
     }
 
-    ExportService exportService
     UserManagementService userManagementService
 
     static responseFormats = ['json']
@@ -231,37 +229,6 @@ class UserManagementController extends RestfulController {
             respondData([message: 'Unable to enable/disable the user. Please try again.', success: false],
                     [status: HttpStatus.NOT_ACCEPTABLE])
         }
-    }
-
-    /**
-     * This action provides excel report for given listed users.
-     * @param selectedUser List of users ID
-     */
-    def export(boolean selectAll) {
-        Map parameters
-        Map labels = [:]
-        List fields = [], columnWidthList = []
-        List<User> userList = userManagementService.getSelectedItemList(selectAll, params.selectedIds, params)
-        float pointOne = 0.1f, pointTwo = 0.2f, pointThree = 0.3f
-        String id = 'id', email = 'email', firstName = 'firstName', lastName = 'lastName',
-                gender = 'gender', birthdate = 'birthdate', dateCreated = 'dateCreated',
-                enabled = 'enabled', accountLocked = 'accountLocked'
-        fields << id; labels.id = 'User Id'; columnWidthList << pointOne
-        fields << email; labels.email = 'Email'; columnWidthList << pointThree
-        fields << firstName; labels.firstName = 'First Name'; columnWidthList << pointTwo
-        fields << lastName; labels.lastName = 'Last Name'; columnWidthList << pointTwo
-        fields << gender; labels.gender = 'Gender'; columnWidthList << pointOne
-        fields << birthdate; labels.birthdate = 'Birthdate'; columnWidthList << pointTwo
-        fields << dateCreated; labels.dateCreated = 'Date Joined'; columnWidthList << pointTwo
-        fields << enabled; labels.enabled = 'Active'; columnWidthList << pointOne
-        fields << accountLocked; labels.accountLocked = 'Locked'; columnWidthList << pointOne
-
-        parameters = ['column.widths': columnWidthList]
-
-        response.contentType = 'application/vnd.ms-excel'
-        response.setHeader('Content-disposition', 'attachment; filename=user-report.csv')
-
-        exportService.export('csv', response.outputStream, userList, fields, labels, [:], parameters)
     }
 
     /**
