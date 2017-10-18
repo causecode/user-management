@@ -76,12 +76,7 @@ class UserController extends RestfulController {
             return false
         }
 
-        if (!NucleusUtils.validateGoogleReCaptcha(requestData.myRecaptchaResponse)) {
-            log.error('Captcha validation failed.')
-            respondData([message: 'Captcha Validation Failed'], [status: HttpStatus.EXPECTATION_FAILED])
-
-            return false
-        }
+        // TODO add server side google re-captcha validation.
 
         User userInstance = new User()
 
