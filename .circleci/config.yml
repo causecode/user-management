@@ -48,3 +48,6 @@ jobs:
       - run: gradle simian
       - run: gradle test cc-jacoco
 
+general:
+  artifacts:
+    - ./build
