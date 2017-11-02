@@ -47,7 +47,3 @@ jobs:
       - run: gradle cc-codenarc
       - run: gradle simian
       - run: gradle test cc-jacoco
-
-general:
-  artifacts:
-    - ./build
