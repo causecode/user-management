@@ -14,6 +14,14 @@ The export plugin was too bulky. It was adding 10 mb to the app's war size.
 3. Google re-captcha server side validation from signup endpoint in UserController. It will be added back after
 a separate gradle plugin is created to support server side google re-captcha validation.
 
+### Added
+* ####CircleCI configuration
+    -  `.circleci/config.yml` for build automation using `CircleCI`.
+    - `mavenCredsSetup.sh` for generating `gradle.properties` during the CircleCI build.
+
+### Modified
+* Upgraded `gradle-code-quality` to `v1.0.0`.
+
 ## Version 0.0.8
 
 ### Modification
