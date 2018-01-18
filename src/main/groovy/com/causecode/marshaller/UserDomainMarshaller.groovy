@@ -37,7 +37,7 @@ class UserDomainMarshaller implements ObjectMarshaller<JSON> {
         writer.object()
 
         writer.key('id')
-        converter.convertAnother(userInstance.id)
+        converter.convertAnother(userInstance.id?.toString())
 
         writer.key('email')
         converter.convertAnother(userInstance.email)
