@@ -22,7 +22,8 @@ buildscript {
     }
 }
 
-version "0.0.9"
+version "1.0.0"
+
 group "com.causecode.plugins"
 
 apply plugin:"idea"
