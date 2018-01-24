@@ -1,5 +1,10 @@
 # ChangeLog
 
+## [1.0.0] - 24-01-2018
+
+### Fixed
+1. Handled issue related to ObjectIDs while responding the user instance. 
+
 ## [0.0.9] - 12-10-2017
 
 ### Fixed
