@@ -1,5 +1,10 @@
 # ChangeLog
 
+## [1.0.1] - [Unreleased]
+
+### Added
+1. Handled `isAccountExpired` and `isAccountLocked` fields in the Marshaller.
+
 ## [1.0.0] - 24-01-2018
 
 ### Fixed
