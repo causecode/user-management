@@ -57,6 +57,12 @@ class UserDomainMarshaller implements ObjectMarshaller<JSON> {
         writer.key('birthdate')
         converter.convertAnother(userInstance.birthdate)
 
+        writer.key('accountExpired')
+        converter.convertAnother(userInstance.accountExpired)
+
+        writer.key('accountLocked')
+        converter.convertAnother(userInstance.accountLocked)
+
         writer.endObject()
     }
 }
