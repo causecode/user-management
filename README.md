@@ -1,7 +1,7 @@
 # User Management Plugin
 
 ```
-Version - 1.0.0
+Version - 1.0.1
 Grails Version - 3.2.0 > *
 Author - CauseCode Technologies
 ```
