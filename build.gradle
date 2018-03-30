@@ -18,7 +18,6 @@ buildscript {
     repositories mavenRepos
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.causecode.plugins:gradle-code-quality:1.0.0"
     }
 }
 
@@ -29,7 +28,7 @@ group "com.causecode.plugins"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
 apply plugin:"org.grails.grails-plugin-publish"
-apply plugin:'gradle-code-quality'
+apply plugin: 'jacoco'
 
 repositories mavenRepos
 
@@ -58,7 +57,6 @@ dependencies {
 
     // CauseCode Dependencies
     provided "com.causecode.plugins:nucleus:0.5.0"
-    provided "com.causecode.plugins:rest-security-core:0.0.1"
     // Grails JSON Views
     provided "org.grails.plugins:views-json:1.1.3"
     provided "org.grails.plugins:views-json-templates:1.1.3"
@@ -80,18 +78,34 @@ dependencies {
     runtime "com.h2database:h2"
 }
 
-ccJacocoExt {
-    excludes = [
-            '**/Application*/**',
-            '**/UrlMappings*/**',
-            // CustomOauthUserDetailsService 3rd party methods.
-            '**/CustomOauthUserDetailsService*/**',
-            '**/UserManagementUrlMappings*/**',
-            '**/UserManagementGrailsPlugin*/**',
-            '**/AuthenticationTokenCleanUpJob*/**',
-            '**/UserDomainMarshaller*/**',
-            '**/UserManagementBootStrap*/**'
-    ]
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        csv.enabled false
+        html.enabled true
+        html.destination "${buildDir}/jacoco/jacocoHtml/"
+        xml.destination "${buildDir}/jacoco/jacocoXml/jacoco.xml"
+    }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: [
+                            '**/Application*/**',
+                            '**/UrlMappings*/**',
+                            // CustomOauthUserDetailsService 3rd party methods.
+                            '**/CustomOauthUserDetailsService*/**',
+                            '**/UserManagementUrlMappings*/**',
+                            '**/UserManagementGrailsPlugin*/**',
+                            '**/AuthenticationTokenCleanUpJob*/**',
+                            '**/UserDomainMarshaller*/**',
+                            '**/UserManagementBootStrap*/**'
+                    ])
+        })
+    }
+
+    executionData test
+    dependsOn test
 }
 
 project.publishing {

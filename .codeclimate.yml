@@ -1,0 +1,10 @@
+version: "2"
+
+plugins:
+  codenarc:
+    enabled: true
+    channel: "beta"
+    config: "./code-climate/codenarc/rule.groovy"
+
+exclude_patterns:
+  - "code-climate/"
