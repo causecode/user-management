@@ -20,7 +20,9 @@ group "com.causecode.plugins"
 
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-plugin-publish"
+apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
 apply plugin: 'jacoco'
 
 repositories mavenRepos
@@ -34,15 +36,15 @@ dependencyManagement {
 
 dependencies {
     // Default plugin dependencies shipped with grails 3.2.0
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.grails:grails-core"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
-    compile "org.grails:grails-dependencies"
-    compile "org.grails:grails-web-boot"
-    compile "org.grails.plugins:cache"
-    compile "org.grails.plugins:scaffolding"
+    compile "org.springframework.boot:spring-boot-starter-logging:1.4.0.RELEASE"
+    compile "org.springframework.boot:spring-boot-autoconfigure:1.4.0.RELEASE"
+    compile "org.grails:grails-core:3.2.0"
+    compile "org.springframework.boot:spring-boot-starter-actuator:1.4.0.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-tomcat:1.4.0.RELEASE"
+    compile "org.grails:grails-dependencies:3.2.0"
+    compile "org.grails:grails-web-boot:3.2.0"
+    compile "org.grails.plugins:cache:3.0.3"
+    compile "org.grails.plugins:scaffolding:3.2.1"
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
@@ -101,46 +103,54 @@ jacocoTestReport {
     dependsOn test
 }
 
-project.publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from project.components.java
+signing {
+    useGpgCmd()
+    sign configurations.archives
+}
 
-            artifactId "user-management"
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            pom.withXml {
-                def pomNode = asNode()
-                // version-less dependencies are handled with dependencyManagement
-                pomNode.dependencies.dependency.findAll {
-                    it.version.text().isEmpty()
-                }.each {
-                    it.replaceNode {}
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'user-management'
+                packaging 'jar'
+                description 'This Plugin provides endpoints for User related operations.'
+                url 'https://github.com/causecode/user-management'
+
+                scm {
+                    url 'scm:svn:https://github.com/causecode/user-management'
+                    connection 'scm:svn:https://github.com/causecode/user-management.git'
+                    developerConnection 'https://github.com:causecode/user-management.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'causecode'
+                        name 'CauseCode Technologies'
+                        email 'bootstrap@causecode.com'
+                    }
                 }
             }
         }
     }
-    repositories {
-        maven {
-            credentials {
-                username mavenPublishUser
-                password mavenPublishPassword
-            }
-            url "https://nexus.causecode.com/repository/maven-releases/"
-        }
-    }
-}
-
-grailsPublish {
-    user = 'user'  // Not required if you defined BINARY_USER var
-    key = 'key'    // Not required if you defined BINARY_KEY var
-    userOrg = 'mycompany' // Optional
-    githubSlug = 'foo/bar'
-    license {
-        name = 'Apache-2.0'
-    }
-    title = "My Plugin Title"
-    desc = "My Plugin Description"
-    developers = [johndoe: "John Doe"]
 }
 
 /*
@@ -153,4 +163,8 @@ sourceSets {
             srcDir 'grails-app/migrations'
         }
     }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleWrapperVersion
 }
