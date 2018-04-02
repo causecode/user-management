@@ -40,10 +40,19 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "build.gradle" }}
 
-      # run tests!
-      - run: gradle clean test
+      # Code climate coverage-test-reporter-id
+      - run: echo "export CC_TEST_REPORTER_ID=$CC_TEST_REPORTER_ID" >> $BASH_ENV
 
-      #run custom gradle tasks
-      - run: gradle cc-codenarc
-      - run: gradle simian
-      - run: gradle test cc-jacoco
+      # Code climate test coverage reporter configuration
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            cp ./code-climate/test-reporter-binaries/test-reporter-0.4.6-RC1-linux-amd64 ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+      - run:
+          name: Run tests
+          command: |
+            ./cc-test-reporter before-build
+            ./gradlew clean jacocoTestReport
+            ./cc-test-reporter format-coverage --input-type jacoco -d ./build/jacoco/jacocoXml/jacoco.xml
+            ./cc-test-reporter upload-coverage
