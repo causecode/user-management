@@ -1,6 +1,14 @@
 # ChangeLog
 
-## [1.0.1] - [Unreleased]
+## [1.0.2] - [02-04-2018]
+
+### Added
+- CircleCI and code climate configurations.
+
+### Removed
+- Unnecessary dependencies.
+
+## [1.0.1] - [13-03-2018]
 
 ### Added
 1. Handled `isAccountExpired` and `isAccountLocked` fields in the Marshaller.

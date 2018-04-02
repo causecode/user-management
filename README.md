@@ -20,7 +20,8 @@ dependencies {
 ```
 
 ### About
-This Plugin provides endpoints for User related operations such as `SignUp, ForgotPassword, ResetPassword` etc.
+This Plugin provides endpoints for User related operations such as `SignUp, ForgotPassword, ResetPassword,` etc.
+This plugin also provides functionality to manage user roles.
 This Plugin is designed for `Stateless REST APIs` only and hence does not make use of `HTTP Sessions`.
 
 ### Usage
