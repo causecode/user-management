@@ -12,7 +12,5 @@ if [ ! -f "$GRADLE_PROPERTIES" ]; then
 fi
 
 echo "Writing MAVEN_CREDENTIALS to gradle.properties..."
-echo "mavenUser=$CAUSECODE_MAVEN_USER" >> $GRADLE_PROPERTIES
-echo "mavenPassword=$CAUSECODE_MAVEN_PASSWORD" >> $GRADLE_PROPERTIES
-echo "mavenPublishUser=$CAUSECODE_MAVEN_USER" >> $GRADLE_PROPERTIES
-echo "mavenPublishPassword=$CAUSECODE_MAVEN_PASSWORD" >> $GRADLE_PROPERTIES
+echo "ossrhUsername=$OSSRH_USERNAME" >> $GRADLE_PROPERTIES
+echo "ossrhPassword=$OSSRH_PASSWORD" >> $GRADLE_PROPERTIES
