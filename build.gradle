@@ -103,6 +103,13 @@ jacocoTestReport {
     dependsOn test
 }
 
+artifacts {
+    archives jar
+
+    archives javadocJar
+    archives sourcesJar
+}
+
 signing {
     useGpgCmd()
     sign configurations.archives
