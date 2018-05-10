@@ -65,7 +65,6 @@ dependencies {
     // Grails Plugins
     provided 'org.grails.plugins:quartz:2.0.13'
     provided 'org.grails.plugins:spring-security-core:3.2.1'
-    provided "javax.validation:validation-api:1.1.0.Final"
     provided "org.grails.plugins:spring-security-rest:2.0.0.M2"
     provided "org.apache.tomcat:tomcat-jdbc"
     provided "org.grails.plugins:views-json:1.2.7"

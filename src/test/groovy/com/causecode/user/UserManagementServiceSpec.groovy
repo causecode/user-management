@@ -16,8 +16,14 @@ import spock.lang.Specification
 @Mock([User, Role, UserRole, SpringSecurityService])
 class UserManagementServiceSpec extends Specification {
 
-    // Issue: https://github.com/spockframework/spock/issues/491
-    final static Logger log = LoggerFactory.getLogger(UserManagementService)
+    /*
+     * Issues raised in spockframework repo:
+     *
+     * 1. https://github.com/spockframework/spock/issues/491
+     * 2. https://github.com/spockframework/spock/issues/783
+     */
+    @SuppressWarnings('FieldName')
+    final static Logger log = LoggerFactory.getLogger(UserManagementServiceSpec.class)
 
     User adminUser
     User normalUser
@@ -56,13 +62,13 @@ class UserManagementServiceSpec extends Specification {
     }
 
     void mockExecuteQueryTotalCount(int totalCount) {
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams ->
+        UserRole.metaClass.static.executeQuery = { String query, Map stringQueryParams ->
             return [totalCount]
         }
     }
 
     void mockExecuteQueryGetUsers(List usersList) {
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map params1 ->
+        UserRole.metaClass.static.executeQuery = { String query, Map stringQueryParams, Map params1 ->
             return usersList
         }
     }
@@ -151,14 +157,14 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, userRole, true)
 
-        UserRole.metaClass.'static'.createCriteria = {
+        UserRole.metaClass.static.createCriteria = {
             return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser, normalUser]
             } ]
         }
-        User.metaClass.'static'.createCriteria = {
+        User.metaClass.static.createCriteria = {
             return ['list': { Map map, Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
