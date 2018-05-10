@@ -5,6 +5,8 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import groovy.json.JsonBuilder
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 /**
@@ -13,6 +15,9 @@ import spock.lang.Specification
 @TestFor(UserManagementService)
 @Mock([User, Role, UserRole, SpringSecurityService])
 class UserManagementServiceSpec extends Specification {
+
+    // Issue: https://github.com/spockframework/spock/issues/491
+    final static Logger log = LoggerFactory.getLogger(UserManagementService.class)
 
     User adminUser
     User normalUser
@@ -102,14 +107,14 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, userRole, true)
 
-        UserRole.metaClass.'static'.createCriteria = {
+        UserRole.metaClass.static.createCriteria = {
             return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser]
             } ]
         }
-        User.metaClass.'static'.createCriteria = {
+        User.metaClass.static.createCriteria = {
             return ['list': { Map map, Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
@@ -181,14 +186,14 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, adminRole, true)
 
-        UserRole.metaClass.'static'.createCriteria = {
+        UserRole.metaClass.static.createCriteria = {
             return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser, normalUser]
             } ]
         }
-        User.metaClass.'static'.createCriteria = {
+        User.metaClass.static.createCriteria = {
             return ['list': { Map map, Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
