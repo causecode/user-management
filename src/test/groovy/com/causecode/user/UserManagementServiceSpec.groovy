@@ -17,7 +17,7 @@ import spock.lang.Specification
 class UserManagementServiceSpec extends Specification {
 
     // Issue: https://github.com/spockframework/spock/issues/491
-    final static Logger log = LoggerFactory.getLogger(UserManagementService.class)
+    final static Logger log = LoggerFactory.getLogger(UserManagementService)
 
     User adminUser
     User normalUser
