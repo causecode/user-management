@@ -22,8 +22,7 @@ class UserManagementServiceSpec extends Specification {
      * 1. https://github.com/spockframework/spock/issues/491
      * 2. https://github.com/spockframework/spock/issues/783
      */
-    @SuppressWarnings('FieldName')
-    final static Logger log = LoggerFactory.getLogger(UserManagementServiceSpec.class)
+    final static Logger log = LoggerFactory.getLogger(UserManagementServiceSpec)
 
     User adminUser
     User normalUser
