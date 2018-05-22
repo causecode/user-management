@@ -1,7 +1,7 @@
 # User Management Plugin
 
-User Management > 2.0.0 supports Grails 3.3.x
-User Management < 1.0.2 supports Grails 3.2.x (Tested upto 3.2.5)
+User Management >= 2.0.0 supports Grails 3.3.x (Tested upto 3.3.5)
+User Management <= 1.0.2 supports Grails 3.2.x (Tested upto 3.2.5)
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/a543c502c3af485cd20c/maintainability)](https://codeclimate.com/repos/5abe31323a371e029300214d/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/a543c502c3af485cd20c/test_coverage)](https://codeclimate.com/repos/5abe31323a371e029300214d/test_coverage)
@@ -10,13 +10,13 @@ User Management < 1.0.2 supports Grails 3.2.x (Tested upto 3.2.5)
 ```
 Version - 2.0.0
 Grails Version - 3.3.5 > *
-Author - CauseCode Technologies
+Author - CauseCode Technologies Pvt. Ltd
 ```
 
 ```
 Version - 1.0.2
 Grails Version - 3.2.0 > *
-Author - CauseCode Technologies
+Author - CauseCode Technologies Pvt. Ltd
 ```
 
 ### Installation 
