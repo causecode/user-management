@@ -67,6 +67,8 @@ dependencies {
     provided 'org.grails.plugins:quartz:2.0.13'
     provided 'org.grails.plugins:spring-security-core:3.2.1'
     provided "org.grails.plugins:spring-security-rest:2.0.0.M2"
+
+    // http://docs.grails.org/latest/guide/upgrading.html#_tomcat_jdbc
     provided "org.apache.tomcat:tomcat-jdbc"
 
     testRuntime "org.grails.plugins:mongodb"
@@ -74,6 +76,7 @@ dependencies {
     testCompile "org.grails:grails-test-mixins:3.3.0"
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-web-testing-support"
+    testCompile "org.grails.plugins:build-test-data:3.3.0"
 
     // Hibernate Dependencies
     provided "org.grails.plugins:hibernate5"
@@ -127,6 +130,11 @@ signing {
 uploadArchives {
     repositories {
         mavenDeployer {
+
+            if (!project.hasProperty('ossrhUsername') || !project.hasProperty('ossrhPassword')) {
+                return
+            }
+
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
             repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {

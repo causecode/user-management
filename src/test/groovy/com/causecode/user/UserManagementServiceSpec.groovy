@@ -1,28 +1,18 @@
 package com.causecode.user
 
+import grails.buildtestdata.BuildDataTest
+import grails.buildtestdata.mixin.Build
 import grails.plugin.springsecurity.SpringSecurityService
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
+import grails.testing.services.ServiceUnitTest
 import groovy.json.JsonBuilder
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 /**
  * This class specifies unit test cases for {@link com.causecode.user.UserManagementService}.
  */
-@TestFor(UserManagementService)
-@Mock([User, Role, UserRole, SpringSecurityService])
-class UserManagementServiceSpec extends Specification {
-
-    /*
-     * Issues raised in spockframework repo:
-     *
-     * 1. https://github.com/spockframework/spock/issues/491
-     * 2. https://github.com/spockframework/spock/issues/783
-     */
-    final static Logger log = LoggerFactory.getLogger(UserManagementServiceSpec)
+@Build([User, UserRole, Role])
+class UserManagementServiceSpec extends Specification implements ServiceUnitTest<UserManagementService>, BuildDataTest {
 
     User adminUser
     User normalUser
