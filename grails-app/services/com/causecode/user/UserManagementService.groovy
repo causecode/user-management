@@ -1,6 +1,6 @@
 package com.causecode.user
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 
 /**
  * UserManagementService provides database specific methods to fetch list of users with filters and pagination applied.

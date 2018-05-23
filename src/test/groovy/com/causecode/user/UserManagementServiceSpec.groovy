@@ -1,18 +1,18 @@
 package com.causecode.user
 
+import grails.buildtestdata.BuildDataTest
+import grails.buildtestdata.mixin.Build
 import grails.plugin.springsecurity.SpringSecurityService
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
+import grails.testing.services.ServiceUnitTest
 import groovy.json.JsonBuilder
 import spock.lang.Specification
 
 /**
  * This class specifies unit test cases for {@link com.causecode.user.UserManagementService}.
  */
-@TestFor(UserManagementService)
-@Mock([User, Role, UserRole, SpringSecurityService])
-class UserManagementServiceSpec extends Specification {
+@Build([User, UserRole, Role])
+class UserManagementServiceSpec extends Specification implements ServiceUnitTest<UserManagementService>, BuildDataTest {
 
     User adminUser
     User normalUser
@@ -51,13 +51,13 @@ class UserManagementServiceSpec extends Specification {
     }
 
     void mockExecuteQueryTotalCount(int totalCount) {
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams ->
+        UserRole.metaClass.static.executeQuery = { String query, Map stringQueryParams ->
             return [totalCount]
         }
     }
 
     void mockExecuteQueryGetUsers(List usersList) {
-        UserRole.metaClass.'static'.executeQuery = { String query, Map stringQueryParams, Map params1 ->
+        UserRole.metaClass.static.executeQuery = { String query, Map stringQueryParams, Map params1 ->
             return usersList
         }
     }
@@ -102,14 +102,14 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, userRole, true)
 
-        UserRole.metaClass.'static'.createCriteria = {
+        UserRole.metaClass.static.createCriteria = {
             return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser]
             } ]
         }
-        User.metaClass.'static'.createCriteria = {
+        User.metaClass.static.createCriteria = {
             return ['list': { Map map, Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
@@ -146,14 +146,14 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, userRole, true)
 
-        UserRole.metaClass.'static'.createCriteria = {
+        UserRole.metaClass.static.createCriteria = {
             return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser, normalUser]
             } ]
         }
-        User.metaClass.'static'.createCriteria = {
+        User.metaClass.static.createCriteria = {
             return ['list': { Map map, Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
@@ -181,14 +181,14 @@ class UserManagementServiceSpec extends Specification {
         assert UserRole.create(adminUser, adminRole, true)
         assert UserRole.create(normalUser, adminRole, true)
 
-        UserRole.metaClass.'static'.createCriteria = {
+        UserRole.metaClass.static.createCriteria = {
             return ['list': { Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
                 return [adminUser, normalUser]
             } ]
         }
-        User.metaClass.'static'.createCriteria = {
+        User.metaClass.static.createCriteria = {
             return ['list': { Map map, Closure closure ->
                 assert closure != null
                 new JsonBuilder() closure
